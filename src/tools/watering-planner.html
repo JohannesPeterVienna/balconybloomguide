@@ -1,0 +1,77 @@
+<!--meta
+{"title":"Balcony Watering & Holiday Planner: How Fast Do Pots Dry?","h1":"Balcony Watering & Holiday Planner","description":"Estimate how fast each balcony pot dries from its size, material, sun hours and wind, how often to check it, and how big a reservoir you need for days away.","kicker":"Watering","related":["watering-balcony-plants-summer","self-watering-containers-holiday","tools/sun-hours"]}
+-->
+<p class="lede">This planner estimates how much water each pot uses on a typical day, how many days it can go between waterings and how large a reservoir it needs while you are away. The numbers are estimates for comparing pots and planning; the finger test in the actual pot still decides when to water.</p>
+
+<h2 id="how-to-use">How to use it</h2>
+<p>For each pot you need its size and shape, its material, the direct sun hours at the spot where it stands, the wind class of your balcony, how leafy the plant is (compact, bushy or large) and the kind of weather you are planning for, from cool spring days to a heatwave. For a holiday, add the number of days you will be away.</p>
+<p>Get the sun hours from the <a href="/tools/sun-hours/">Sun &amp; Shade Simulator</a> for the right spot: a pot at the railing and one at the back wall can differ by several hours. The wind class comes from the <a href="/tools/wind-check/">Wind Exposure Check</a>.</p>
+
+<h2 id="how-it-calculates">How it calculates</h2>
+<p>In plain words: the planner takes how much water an open, sunny place loses per day, scales it for your spot and the leaf area above the pot, and compares that with the usable water in the mix.</p>
+<ol>
+<li><b>Weather.</b> A reference evaporation rate: 2 mm (0.08 in) per day for cool spring or fall days, 4 mm (0.16 in) for warm summer days, 6 mm (0.24 in) for hot days and 8 mm (0.31 in) in a heatwave.</li>
+<li><b>Sun.</b> A factor of 0.4 plus 0.06 for every hour of direct sun, capped at 10 hours. A pot in shade still uses 40 % of the rate; one with 10 hours uses 100 %.</li>
+<li><b>Wind.</b> 1.0 for Sheltered, 1.15 for Moderate, 1.3 for Exposed and 1.5 for Very exposed.</li>
+<li><b>Pot material.</b> Unglazed terracotta and fabric bags lose water through their walls too, so they get a higher factor.</li>
+<li><b>Leaf area.</b> The top area of the pot times a canopy factor: 1.0 for compact plants, 1.5 for bushy ones, 2.5 for large plants that spread well beyond the rim.</li>
+</ol>
+<p>Multiplied together, that gives liters per day, because 1 mm of water over 1 m² is 1 liter (0.04 in over 10.8 sq ft is about a quarter gallon).</p>
+<p>For the buffer, the planner assumes that about 20 % of the mix volume (published values for container mixes run from roughly 20 to 35 %; the planner takes the cautious end) is water the plant can use between a full watering and wilting, and that you water when half of that is gone. So the buffer is one tenth of the mix volume. Buffer divided by daily use gives the days between waterings, which turns into advice: under 0.75 days means twice a day (better: a cooler spot or a bigger pot), under 1.5 days check daily, under 2.5 days every 1–2 days, under 4 days every 2–3 days, otherwise twice a week.</p>
+<table class="data">
+<caption>Pot material factors used by the planner</caption>
+<thead><tr><th>Material</th><th>Factor</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Plastic, fiberglass, glazed ceramic, metal</td><td>1.0</td><td>Walls hold water in</td></tr>
+<tr><td>Concrete, wood</td><td>1.05</td><td>Slightly porous walls</td></tr>
+<tr><td>Unglazed terracotta</td><td>1.15</td><td>Water evaporates through the clay</td></tr>
+<tr><td>Fabric grow bag</td><td>1.25</td><td>Air on all sides of the mix</td></tr>
+</tbody>
+</table>
+<p>For days away, the reservoir is days × daily use × 1.2 (a 20 % safety margin), minus the buffer already in the pot.</p>
+
+<!--ad-->
+<h2 id="worked-examples">Worked examples</h2>
+<figure>
+<svg viewBox="0 0 360 200" role="img" aria-labelledby="wp-svg-t">
+<title id="wp-svg-t">Pot with water buffer drawn as levels, losing water to sun and wind</title>
+<rect class="s-paper" x="0" y="0" width="360" height="200"/>
+<polygon class="s-line" points="110,60 250,60 230,180 130,180"/>
+<rect class="s-shade" x="124" y="120" width="112" height="60"/>
+<rect class="s-moss" x="117" y="90" width="126" height="30"/>
+<line class="s-line" x1="110" y1="120" x2="290" y2="120"/>
+<circle class="s-sun" cx="40" cy="35" r="16"/>
+<line class="s-sunline" x1="58" y1="45" x2="120" y2="62"/>
+<line class="s-shadeline" x1="300" y1="40" x2="250" y2="70"/>
+<line class="s-shadeline" x1="310" y1="60" x2="260" y2="85"/>
+<text class="s-small" x="260" y="100">used: water now</text>
+<text class="s-small" x="260" y="140">reserve</text>
+<text class="s-small" x="300" y="30">wind</text>
+<text class="s-small" x="120" y="196">usable water = 20 % of mix</text>
+<line class="s-shadeline" x1="180" y1="20" x2="180" y2="55"/>
+<text class="s-small" x="186" y="30">daily use</text>
+</svg>
+<figcaption>Of the water the mix can supply to the plant, the planner lets half be used before it calls for watering; that half is the buffer. Sun, wind, warm weather and a big canopy empty it faster.</figcaption>
+</figure>
+<p><b>A 12 in (30 cm) plastic pot</b> with a bushy plant, 6 hours of sun, Moderate wind, warm summer weather. The pot holds 12.5 L (3.3 gal) of mix and has a top area of 0.073 m² (0.79 sq ft). Daily use: 4 × (0.4 + 0.36) × 1.15 × 1.0 × (0.073 × 1.5) ≈ 0.38 L (13 fl oz). Buffer: 12.5 × 0.2 × 0.5 ≈ 1.25 L (42 fl oz), which lasts about 3.3 days, so the advice is to check every 2–3 days. On hot days use rises to 0.57 L and the interval drops to 2.2 days (check every 1–2 days). For a week away in warm weather: 7 × 0.38 × 1.2 − 1.25 ≈ 1.97 L (67 fl oz).</p>
+<p><b>A 16 in (40 cm) terracotta pot</b> with a large tomato plant (<em>Solanum lycopersicum</em>), 8 hours of sun at the railing, Exposed, hot weather. Mix 32.4 L (8.6 gal), top 0.13 m² (1.4 sq ft). Daily use: 6 × 0.88 × 1.3 × 1.15 × (0.13 × 2.5) ≈ 2.56 L (0.68 gal). Buffer 3.24 L (0.86 gal), enough for about 1.3 days: check daily. A week away needs about 18.3 L (4.8 gal) of reservoir. That is why <a href="/guides/balcony-tomatoes/">balcony tomatoes</a> are the hardest plants to leave alone.</p>
+<p><b>An 8 in (20 cm) pot</b> with a large plant in a heatwave, 10 hours of sun, Very exposed: about 0.97 L per day against a buffer of 0.37 L. The planner says twice a day and suggests a cooler spot or a bigger pot, which is the honest answer.</p>
+
+<h2 id="limits">Limits and the finger test</h2>
+<p>These are estimates with round factors, not measurements. Real use depends on the plant, its growth stage, the mix, humidity and rain. Use the planner to see which pots dry fastest and to size a reservoir, then check the pots themselves: push a finger into the mix up to the second knuckle, and water when it feels dry at that depth. A dry pot also feels noticeably lighter. Before a trip, test the reservoir setup for a few days while you are still home; the <a href="/guides/self-watering-containers-holiday/">holiday watering guide</a> covers the options.</p>
+
+<h2 id="faq">FAQ</h2>
+<h3>Why does my small pot need water so often?</h3>
+<p>The buffer grows with the volume of mix, but the leaves above it do not shrink to match. A small pot with a big plant has little reserve for a lot of leaf.</p>
+<h3>Does rain count?</h3>
+<p>No. Under a ceiling most pots get little rain, and the planner assumes none. After a soaking rain on an open balcony, start counting again.</p>
+<h3>How accurate is the reservoir size?</h3>
+<p>It includes a 20 % margin, but a heatwave during your trip can exceed it. When in doubt, plan for hotter weather than forecast.</p>
+
+<h2 id="sources">Sources</h2>
+<ul>
+<li>FAO Irrigation and Drainage Paper 56, Crop evapotranspiration – the idea of a reference evaporation rate scaled by crop and site factors.</li>
+<li><a href="https://extension.umn.edu/">University of Minnesota Extension</a> – watering container plants and checking moisture by feel.</li>
+<li><a href="https://extension.psu.edu/">Penn State Extension</a> – water-holding capacity of container substrates.</li>
+<li><a href="https://www.rhs.org.uk/">Royal Horticultural Society</a> – watering containers and holiday watering.</li>
+</ul>

@@ -1,0 +1,10 @@
+{
+  "name": "balconybloomguide",
+  "private": true,
+  "description": "balconybloomguide.com – static site for GitHub Pages (docs/)",
+  "scripts": {
+    "build": "node src/build.mjs",
+    "test": "node --test tests/core.test.js && node tests/check-pages.mjs",
+    "test:browser": "node tests/browser.mjs"
+  }
+}
