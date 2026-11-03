@@ -46,6 +46,7 @@
   var gtag = window.gtag || function () { (window.dataLayer = window.dataLayer || []).push(arguments); };
   var state = { tc: null, cmReady: false, us: null, last: '' };
   var gaLoaded = false;
+  var OPTED_OUT = 3;   // InitialUsStatesOptOutStatusEnum.OPTED_OUT
   function loadGA() {
     if (gaLoaded) return; gaLoaded = true;
     var s = document.createElement('script');
@@ -92,15 +93,40 @@
     });
     apply();
   }
+  // U.S. visitors under a state privacy law get Google's opt-out dialog, everyone else the consent message.
+  function openPrivacyMessage(before) {
+    var fc = window.googlefc;
+    var u = fc.usstatesoptout;
+    if (u && typeof u.getInitialUsStatesOptOutStatus === 'function') {
+      var E = u.InitialUsStatesOptOutStatusEnum;
+      var doesNotApply = E && E.DOES_NOT_APPLY !== undefined ? E.DOES_NOT_APPLY : 1;
+      var us = u.getInitialUsStatesOptOutStatus();
+      if (us !== doesNotApply) {
+        u.openConfirmationDialog(function (userDidOptOut) {
+          if (userDidOptOut) {
+            state.us = OPTED_OUT;   // ad personalization and analytics stay denied
+          } else {
+            try { state.us = u.getInitialUsStatesOptOutStatus(); } catch (e) { state.us = null; }
+            // no opt-out: restore the signals withdrawn on click unless the CMP already sent new ones
+            if (state.tc === null && !state.cmReady) { state.tc = before.tc; state.cmReady = before.cmReady; }
+          }
+          apply();
+        });
+        return;
+      }
+    }
+    fc.showRevocationMessage();
+  }
   function privacyButtons() {
     document.querySelectorAll('[data-privacy-settings]').forEach(function (b) {
       b.addEventListener('click', function () {
         // withdraw at once; the CMP reports the new decision through the listeners above
+        var before = { tc: state.tc, cmReady: state.cmReady };
         state.tc = null; state.cmReady = false; apply();
         window.googlefc = window.googlefc || {};
         window.googlefc.callbackQueue = window.googlefc.callbackQueue || [];
         window.googlefc.callbackQueue.push(function () {
-          try { window.googlefc.showRevocationMessage(); } catch (e) { /* CMP not available */ }
+          try { openPrivacyMessage(before); } catch (e) { /* CMP not available */ }
         });
         loadAdScript();
       });
