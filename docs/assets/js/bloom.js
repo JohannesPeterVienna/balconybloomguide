@@ -44,7 +44,7 @@
 
   /* ---------- consent + analytics ---------- */
   var gtag = window.gtag || function () { (window.dataLayer = window.dataLayer || []).push(arguments); };
-  var state = { tc: null, cmReady: false, us: null, last: '' };
+  var state = { tc: null, cmReady: false, us: null, gppOptOut: false, last: '' };
   var gaLoaded = false;
   var OPTED_OUT = 3;   // InitialUsStatesOptOutStatusEnum.OPTED_OUT
   function loadGA() {
@@ -63,18 +63,41 @@
   function apply() {
     var C = window.BBConsent;
     var cm = state.cmReady && C.tcfSignal(state.tc) !== 'no' ? consentModeValues() : null;
-    var d = C.decide(state.tc, cm, state.us);
+    // a U.S. opt-out reported later through GPP keeps everything denied for the rest of the page view
+    var d = state.gppOptOut ? Object.assign({}, C.DENIED_ALL) : C.decide(state.tc, cm, state.us);
     var ga = d.analytics_storage === 'granted';
     window['ga-disable-' + GA_ID] = !ga;
     var key = JSON.stringify(d);
     if (key !== state.last) { state.last = key; gtag('consent', 'update', d); }
     if (ga) loadGA();
   }
+  // Later U.S. opt-outs (after the initial status) arrive through the IAB GPP API of Google's CMP.
+  // Only ever used to deny; a missing API or a failed call leaves the current (denied-by-default) state.
+  var gppWatching = false;
+  function gppEvent(pd) {
+    var out;
+    try { out = window.BBConsent.gppUsOptOut(pd); } catch (e) { out = true; }
+    if (out === true && !state.gppOptOut) { state.gppOptOut = true; apply(); }
+  }
+  function watchGpp() {
+    if (gppWatching || typeof window.__gpp !== 'function') return;
+    try {
+      window.__gpp('addEventListener', function (evt, ok) {
+        if (!ok) return;   // call failed: nothing changes
+        try {
+          if (evt && evt.pingData !== undefined) gppEvent(evt.pingData);
+          else window.__gpp('ping', function (pd, pok) { if (pok) gppEvent(pd); });
+        } catch (e) { gppEvent(null); }
+      });
+      gppWatching = true;
+    } catch (e) { /* GPP API not usable: keep the current state */ }
+  }
   function watchConsent() {
     window.googlefc = window.googlefc || {};
     window.googlefc.callbackQueue = window.googlefc.callbackQueue || [];
     window.googlefc.callbackQueue.push({
       CONSENT_API_READY: function () {
+        watchGpp();
         if (typeof window.__tcfapi !== 'function') return;
         window.__tcfapi('addEventListener', 2, function (tc, ok) {
           state.tc = ok ? tc : null;
@@ -89,6 +112,7 @@
           state.us = u && typeof u.getInitialUsStatesOptOutStatus === 'function' ? u.getInitialUsStatesOptOutStatus() : null;
         } catch (e) { state.us = null; }
         apply();
+        watchGpp();
       }
     });
     apply();

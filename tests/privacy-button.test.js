@@ -9,7 +9,7 @@ const JS = path.join(__dirname, '..', 'docs', 'assets', 'js');
 const CONSENT = fs.readFileSync(path.join(JS, 'consent.js'), 'utf8');
 const BLOOM = fs.readFileSync(path.join(JS, 'bloom.js'), 'utf8');
 
-function page(usStatus, withEnum) {
+function page(usStatus, withEnum, gpp) {
   const calls = [];
   const consentUpdates = [];
   let clickHandler = null;
@@ -41,6 +41,7 @@ function page(usStatus, withEnum) {
     matchMedia: () => ({ matches: false }),
     localStorage: { getItem: () => null }
   };
+  if (gpp) window.__gpp = gpp;
   const ctx = vm.createContext({ window, document, localStorage: window.localStorage, console, JSON, Date });
   ctx.this = ctx;
   vm.runInContext(CONSENT.replace('})(this);', '})(window);'), ctx);
@@ -56,7 +57,7 @@ function page(usStatus, withEnum) {
   runQueue();
   // a U.S. visitor outside the GDPR who has not opted out
   tcfListener({ gdprApplies: false, eventStatus: 'tcloaded' }, true);
-  return { calls, consentUpdates, click: () => clickHandler(), runQueue, usstatesoptout, last: () => consentUpdates[consentUpdates.length - 1] };
+  return { calls, consentUpdates, window, click: () => clickHandler(), runQueue, usstatesoptout, last: () => consentUpdates[consentUpdates.length - 1] };
 }
 
 test('U.S. state law applies: opens the opt-out dialog, not the EU message; opting out keeps everything denied', () => {
@@ -94,4 +95,83 @@ test('CMP without the U.S. API: shows the consent message', () => {
   delete p.usstatesoptout.getInitialUsStatesOptOutStatus;
   p.click(); p.runQueue();
   assert.deepEqual(p.calls.filter((c) => c[0] !== 'script'), [['revocation']]);
+});
+
+// ---------- later U.S. opt-out through the IAB GPP API ----------
+function gppStub() {
+  const g = function (cmd, cb) {
+    if (cmd === 'addEventListener') { g.listener = cb; cb({ eventName: 'listenerRegistered', listenerId: 1, data: true, pingData: g.ping }, true); }
+    else if (cmd === 'ping') cb(g.ping, true);
+  };
+  g.ping = { gppVersion: '1.1', cmpStatus: 'loaded', signalStatus: 'ready', applicableSections: [7], parsedSections: { usnat: [{ Version: 1, SaleOptOut: 2, SharingOptOut: 2, TargetedAdvertisingOptOut: 2 }] } };
+  g.fire = (pingData) => g.listener({ eventName: 'signalStatus', listenerId: 1, data: 'ready', pingData }, true);
+  return g;
+}
+const GA_OFF = 'ga-disable-G-T00HRG2YVF';
+
+test('GPP: later opt-out after an initial NOT_OPTED_OUT switches everything off at once', () => {
+  const g = gppStub();
+  const p = page(2, true, g);
+  assert.ok(g.listener, 'GPP listener registered');
+  assert.equal(p.last().analytics_storage, 'granted');
+  assert.equal(p.window[GA_OFF], false);
+  g.fire({ signalStatus: 'ready', applicableSections: [7], parsedSections: { usnat: [{ Version: 1, SaleOptOut: 1, SharingOptOut: 1, TargetedAdvertisingOptOut: 1 }, { Gpc: false }] } });
+  assert.deepEqual({ ...p.last() }, { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'denied' });
+  assert.equal(p.window[GA_OFF], true);
+  // a later "no opt-out" event or the TCF listener does not grant anything again in this page view
+  g.fire(g.ping);
+  assert.equal(p.last().analytics_storage, 'denied');
+});
+
+test('GPP: state section (usca) with only TargetedAdvertising/Sharing opt-out also counts', () => {
+  const g = gppStub();
+  const p = page(2, true, g);
+  g.fire({ signalStatus: 'ready', applicableSections: [8], parsedSections: { usca: { Version: 1, SaleOptOut: 2, SharingOptOut: 1 } } });
+  assert.equal(p.last().ad_personalization, 'denied');
+  assert.equal(p.window[GA_OFF], true);
+});
+
+test('GPP: no opt-out, no U.S. section or CMP not ready leaves the state unchanged', () => {
+  const g = gppStub();
+  const p = page(2, true, g);
+  g.fire({ signalStatus: 'ready', applicableSections: [7], parsedSections: { usnat: { SaleOptOut: 0, SharingOptOut: 2, TargetedAdvertisingOptOut: 2 } } });
+  g.fire({ signalStatus: 'ready', applicableSections: [-1], parsedSections: {} });
+  g.fire({ signalStatus: 'not ready' });
+  assert.equal(p.last().analytics_storage, 'granted');
+  assert.equal(p.window[GA_OFF], false);
+});
+
+test('no GPP API: nothing changes (granted stays granted, denied stays denied)', () => {
+  const p = page(2, true);
+  assert.equal(p.last().analytics_storage, 'granted');
+  const q = page(0, true);   // UNKNOWN initial U.S. status
+  assert.equal(q.last().analytics_storage, 'denied');
+  const g = gppStub();
+  const r = page(0, true, g);   // GPP saying "no opt-out" never grants anything
+  g.fire(g.ping);
+  assert.equal(r.last().analytics_storage, 'denied');
+  assert.equal(r.window[GA_OFF], true);
+});
+
+test('GPP: malformed or unreadable data → denied', () => {
+  const bad = [
+    'garbage',
+    null,
+    { signalStatus: 'ready', applicableSections: [7], parsedSections: { usnat: 'xx' } },
+    { signalStatus: 'ready', applicableSections: [7], parsedSections: { usnat: [{ SaleOptOut: 'no' }] } },
+    { signalStatus: 'ready', applicableSections: [7] },
+    { signalStatus: 'ready', parsedSections: { tcfeuv2: {} } }
+  ];
+  for (const pd of bad) {
+    const g = gppStub();
+    const p = page(2, true, g);
+    assert.equal(p.last().analytics_storage, 'granted');
+    g.fire(pd);
+    assert.equal(p.last().analytics_storage, 'denied', JSON.stringify(pd));
+    assert.equal(p.last().ad_personalization, 'denied');
+    assert.equal(p.window[GA_OFF], true);
+  }
+  // a GPP API that throws keeps the page working and grants nothing new
+  const p = page(0, true, () => { throw new Error('boom'); });
+  assert.equal(p.last().analytics_storage, 'denied');
 });
