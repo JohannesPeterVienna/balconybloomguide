@@ -13,7 +13,7 @@ const CLIENT = 'ca-pub-7811071715414905';
 const GA = 'G-T00HRG2YVF';
 const REVIEWED = 'October 31, 2026';
 const REVIEWED_ISO = '2026-10-31';
-const V = '20261103c';
+const V = '20261103d';
 
 export const GROUPS = [
   { key: 'sun', name: 'Sun & orientation', slugs: ['east-facing-balcony-plants', 'west-facing-balcony-plants', 'north-facing-balcony-plants', 'south-facing-balcony-plants'] },
@@ -243,7 +243,7 @@ ${indexable.map((p) => `  <url><loc>${SITE}${p.path}</loc><lastmod>${REVIEWED_IS
 `);
 write('robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
 write('ads.txt', `google.com, pub-7811071715414905, DIRECT, f08c47fec0942fa0\n`);
-write('CNAME', 'balconybloomguide.com\n');
+write('CNAME', 'balconybloomguide.com');
 write('.nojekyll', '');
 write('favicon.svg', ICON.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ').replace(' aria-hidden="true"', '') + '\n');
 

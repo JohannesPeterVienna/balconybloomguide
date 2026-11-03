@@ -133,7 +133,7 @@
       var tc = lastTc || (before && before.tc);
       var gdpr = !!(tc && tc.gdprApplies === true);
       var us = u.getInitialUsStatesOptOutStatus();
-      if ((us === notOptedOut || us === optedOut) && !gdpr) {
+      if ((us === notOptedOut || us === optedOut) && !gdpr && typeof u.openConfirmationDialog === 'function') {
         u.openConfirmationDialog(function (userDidOptOut) {
           if (userDidOptOut) {
             state.us = OPTED_OUT;   // ad personalization and analytics stay denied
