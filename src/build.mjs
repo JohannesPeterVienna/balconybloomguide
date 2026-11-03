@@ -13,7 +13,7 @@ const CLIENT = 'ca-pub-7811071715414905';
 const GA = 'G-T00HRG2YVF';
 const REVIEWED = 'October 31, 2026';
 const REVIEWED_ISO = '2026-10-31';
-const V = '20261103b';
+const V = '20261103c';
 
 export const GROUPS = [
   { key: 'sun', name: 'Sun & orientation', slugs: ['east-facing-balcony-plants', 'west-facing-balcony-plants', 'north-facing-balcony-plants', 'south-facing-balcony-plants'] },

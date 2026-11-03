@@ -47,6 +47,7 @@
   var state = { tc: null, cmReady: false, us: null, gppOptOut: false, last: '' };
   var gaLoaded = false;
   var OPTED_OUT = 3;   // InitialUsStatesOptOutStatusEnum.OPTED_OUT
+  var lastTc = null;   // latest TCF data the CMP reported
   function loadGA() {
     if (gaLoaded) return; gaLoaded = true;
     var s = document.createElement('script');
@@ -101,6 +102,7 @@
         if (typeof window.__tcfapi !== 'function') return;
         window.__tcfapi('addEventListener', 2, function (tc, ok) {
           state.tc = ok ? tc : null;
+          if (ok && tc) lastTc = tc;   // kept across the click-time withdrawal for the dialog choice
           if (ok && tc && tc.eventStatus === 'useractioncomplete' && typeof window.googlefc.getGoogleConsentModeValues === 'function') state.cmReady = true;
           apply();
         });
@@ -118,14 +120,20 @@
     apply();
   }
   // U.S. visitors under a state privacy law get Google's opt-out dialog, everyone else the consent message.
+  // The U.S. dialog only when the status is known to be NOT_OPTED_OUT or OPTED_OUT and the TCF data
+  // does not say the GDPR applies; UNKNOWN (0), DOES_NOT_APPLY or an EU visitor → revocation message,
+  // so a visitor in the EU can always withdraw consent.
   function openPrivacyMessage(before) {
     var fc = window.googlefc;
     var u = fc.usstatesoptout;
     if (u && typeof u.getInitialUsStatesOptOutStatus === 'function') {
       var E = u.InitialUsStatesOptOutStatusEnum;
-      var doesNotApply = E && E.DOES_NOT_APPLY !== undefined ? E.DOES_NOT_APPLY : 1;
+      var notOptedOut = E && E.NOT_OPTED_OUT !== undefined ? E.NOT_OPTED_OUT : 2;
+      var optedOut = E && E.OPTED_OUT !== undefined ? E.OPTED_OUT : 3;
+      var tc = lastTc || (before && before.tc);
+      var gdpr = !!(tc && tc.gdprApplies === true);
       var us = u.getInitialUsStatesOptOutStatus();
-      if (us !== doesNotApply) {
+      if ((us === notOptedOut || us === optedOut) && !gdpr) {
         u.openConfirmationDialog(function (userDidOptOut) {
           if (userDidOptOut) {
             state.us = OPTED_OUT;   // ad personalization and analytics stay denied

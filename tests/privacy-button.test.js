@@ -9,7 +9,7 @@ const JS = path.join(__dirname, '..', 'docs', 'assets', 'js');
 const CONSENT = fs.readFileSync(path.join(JS, 'consent.js'), 'utf8');
 const BLOOM = fs.readFileSync(path.join(JS, 'bloom.js'), 'utf8');
 
-function page(usStatus, withEnum, gpp) {
+function page(usStatus, withEnum, gpp, gdprApplies = false) {
   const calls = [];
   const consentUpdates = [];
   let clickHandler = null;
@@ -56,7 +56,7 @@ function page(usStatus, withEnum, gpp) {
   };
   runQueue();
   // a U.S. visitor outside the GDPR who has not opted out
-  tcfListener({ gdprApplies: false, eventStatus: 'tcloaded' }, true);
+  tcfListener({ gdprApplies, eventStatus: 'tcloaded' }, true);
   return { calls, consentUpdates, window, click: () => clickHandler(), runQueue, usstatesoptout, last: () => consentUpdates[consentUpdates.length - 1] };
 }
 
@@ -87,6 +87,31 @@ test('U.S. state law does not apply: shows the consent (revocation) message', ()
     const p = page(1, withEnum);
     p.click(); p.runQueue();
     assert.deepEqual(p.calls.filter((c) => c[0] !== 'script'), [['revocation']]);
+  }
+});
+
+test('EU + status 0 (UNKNOWN) → revocation message, so consent can be withdrawn', () => {
+  for (const withEnum of [true, false]) {
+    const p = page(0, withEnum, undefined, true);
+    p.click(); p.runQueue();
+    assert.deepEqual(p.calls.filter((c) => c[0] !== 'script'), [['revocation']]);
+  }
+});
+
+test('status 0 (UNKNOWN) without GDPR → revocation message, not the U.S. dialog', () => {
+  const p = page(0, true);
+  p.click(); p.runQueue();
+  assert.deepEqual(p.calls.filter((c) => c[0] !== 'script'), [['revocation']]);
+});
+
+test('U.S. status 2 or 3 → U.S. dialog; but GDPR applies → revocation message', () => {
+  for (const st of [2, 3]) {
+    const p = page(st, true);
+    p.click(); p.runQueue();
+    assert.deepEqual(p.calls.filter((c) => c[0] !== 'script'), [['usDialog']]);
+    const q = page(st, true, undefined, true);
+    q.click(); q.runQueue();
+    assert.deepEqual(q.calls.filter((c) => c[0] !== 'script'), [['revocation']]);
   }
 });
 
