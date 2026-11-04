@@ -18,7 +18,9 @@ const REVIEWED_ISO = '2026-10-31';
 const UPDATED = 'November 4, 2026';
 const UPDATED_ISO = '2026-11-04';
 const PUBLISHED_ISO = '2026-10-31';
-const V = '20261104c';
+const V = '20261104d';
+// Guides corrected on November 4 (rosemary hardiness aligned with the plant profile).
+const GUIDES_CHANGED = ['windy-balcony-plants', 'south-facing-balcony-plants', 'overwintering-balcony-plants'];
 // Pages that never load the AdSense script (legal and contact pages, 404).
 const NO_LOADER = ['/imprint/', '/privacy/', '/contact/'];
 
@@ -191,11 +193,11 @@ ${lede}
 ${AD('top')}
 ${rest}
 ${relatedCards(m.related)}
-<p class="reviewed">Last reviewed: ${REVIEWED}. Found an error? <a href="/contact/">Tell us</a>.</p>
+<p class="reviewed">Last reviewed: ${GUIDES_CHANGED.includes(s) ? UPDATED : REVIEWED}. Found an error? <a href="/contact/">Tell us</a>.</p>
 </article><aside class="side" aria-label="Advertisement">${AD('side')}</aside></div>`;
-  pages.push({ path: `/guides/${s}/`, kind: 'guide', ads: true, title: m.title, description: m.description, html, navCurrent: '/guides/',
+  pages.push({ path: `/guides/${s}/`, kind: 'guide', ads: true, ...(GUIDES_CHANGED.includes(s) ? { modified: UPDATED_ISO } : {}), title: m.title, description: m.description, html, navCurrent: '/guides/',
     crumbs: [['Home', '/'], ['Guides', '/guides/'], [m.h1, `/guides/${s}/`]],
-    schema: [{ '@type': 'Article', headline: m.h1, description: m.description, datePublished: PUBLISHED_ISO, dateModified: REVIEWED_ISO, inLanguage: 'en', mainEntityOfPage: `${SITE}/guides/${s}/`, publisher: { '@type': 'Organization', name: 'AdStern', url: SITE + '/about/' } }, faq].filter(Boolean) });
+    schema: [{ '@type': 'Article', headline: m.h1, description: m.description, datePublished: PUBLISHED_ISO, dateModified: GUIDES_CHANGED.includes(s) ? UPDATED_ISO : REVIEWED_ISO, inLanguage: 'en', mainEntityOfPage: `${SITE}/guides/${s}/`, publisher: { '@type': 'Organization', name: 'AdStern', url: SITE + '/about/' } }, faq].filter(Boolean) });
 }
 
 // plant profiles

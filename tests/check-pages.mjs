@@ -46,7 +46,7 @@ if (fs.readFileSync(path.join(DOCS, 'CNAME'), 'utf8') !== 'balconybloomguide.com
 if (fs.readFileSync(path.join(DOCS, 'ads.txt'), 'utf8') !== 'google.com, pub-7811071715414905, DIRECT, f08c47fec0942fa0\n') problems.push('ads.txt changed');
 // lastmod changes only for pages whose content changed: the guides, tools, imprint and contact page keep the
 // October 31 rebuild date; plant profiles, overviews, home, About and privacy carry November 4. The visible date must match.
-const CHANGED = /^\/(plants\/.*|guides\/|tools\/|about\/|privacy\/)?$/;
+const CHANGED = /^\/(plants\/.*|guides\/|guides\/(windy-balcony-plants|south-facing-balcony-plants|overwintering-balcony-plants)\/|tools\/|about\/|privacy\/)?$/;
 for (const m of fs.readFileSync(path.join(DOCS, 'sitemap.xml'), 'utf8').matchAll(/<loc>https:\/\/balconybloomguide\.com([^<]*)<\/loc><lastmod>([^<]*)<\/lastmod>/g)) {
   const want = CHANGED.test(m[1]) ? '2026-11-04' : '2026-10-31';
   if (m[2] !== want) problems.push(`sitemap lastmod ${m[1]} ${m[2]} instead of ${want}`);
