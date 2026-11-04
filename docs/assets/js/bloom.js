@@ -44,8 +44,10 @@
 
   /* ---------- consent + analytics ---------- */
   var gtag = window.gtag || function () { (window.dataLayer = window.dataLayer || []).push(arguments); };
-  var state = { tc: null, cmReady: false, us: null, last: '' };
+  var state = { tc: null, cmReady: false, us: null, gppOptOut: false, last: '' };
   var gaLoaded = false;
+  var OPTED_OUT = 3;   // InitialUsStatesOptOutStatusEnum.OPTED_OUT
+  var lastTc = null;   // latest TCF data the CMP reported
   function loadGA() {
     if (gaLoaded) return; gaLoaded = true;
     var s = document.createElement('script');
@@ -62,21 +64,45 @@
   function apply() {
     var C = window.BBConsent;
     var cm = state.cmReady && C.tcfSignal(state.tc) !== 'no' ? consentModeValues() : null;
-    var d = C.decide(state.tc, cm, state.us);
+    // a U.S. opt-out reported later through GPP keeps everything denied for the rest of the page view
+    var d = state.gppOptOut ? Object.assign({}, C.DENIED_ALL) : C.decide(state.tc, cm, state.us);
     var ga = d.analytics_storage === 'granted';
     window['ga-disable-' + GA_ID] = !ga;
     var key = JSON.stringify(d);
     if (key !== state.last) { state.last = key; gtag('consent', 'update', d); }
     if (ga) loadGA();
   }
+  // Later U.S. opt-outs (after the initial status) arrive through the IAB GPP API of Google's CMP.
+  // Only ever used to deny; a missing API or a failed call leaves the current (denied-by-default) state.
+  var gppWatching = false;
+  function gppEvent(pd) {
+    var out;
+    try { out = window.BBConsent.gppUsOptOut(pd); } catch (e) { out = true; }
+    if (out === true && !state.gppOptOut) { state.gppOptOut = true; apply(); }
+  }
+  function watchGpp() {
+    if (gppWatching || typeof window.__gpp !== 'function') return;
+    try {
+      window.__gpp('addEventListener', function (evt, ok) {
+        if (!ok) return;   // call failed: nothing changes
+        try {
+          if (evt && evt.pingData !== undefined) gppEvent(evt.pingData);
+          else window.__gpp('ping', function (pd, pok) { if (pok) gppEvent(pd); });
+        } catch (e) { gppEvent(null); }
+      });
+      gppWatching = true;
+    } catch (e) { /* GPP API not usable: keep the current state */ }
+  }
   function watchConsent() {
     window.googlefc = window.googlefc || {};
     window.googlefc.callbackQueue = window.googlefc.callbackQueue || [];
     window.googlefc.callbackQueue.push({
       CONSENT_API_READY: function () {
+        watchGpp();
         if (typeof window.__tcfapi !== 'function') return;
         window.__tcfapi('addEventListener', 2, function (tc, ok) {
           state.tc = ok ? tc : null;
+          if (ok && tc) lastTc = tc;   // kept across the click-time withdrawal for the dialog choice
           if (ok && tc && tc.eventStatus === 'useractioncomplete' && typeof window.googlefc.getGoogleConsentModeValues === 'function') state.cmReady = true;
           apply();
         });
@@ -88,19 +114,51 @@
           state.us = u && typeof u.getInitialUsStatesOptOutStatus === 'function' ? u.getInitialUsStatesOptOutStatus() : null;
         } catch (e) { state.us = null; }
         apply();
+        watchGpp();
       }
     });
     apply();
+  }
+  // U.S. visitors under a state privacy law get Google's opt-out dialog, everyone else the consent message.
+  // The U.S. dialog only when the status is known to be NOT_OPTED_OUT or OPTED_OUT and the TCF data
+  // does not say the GDPR applies; UNKNOWN (0), DOES_NOT_APPLY or an EU visitor → revocation message,
+  // so a visitor in the EU can always withdraw consent.
+  function openPrivacyMessage(before) {
+    var fc = window.googlefc;
+    var u = fc.usstatesoptout;
+    if (u && typeof u.getInitialUsStatesOptOutStatus === 'function') {
+      var E = u.InitialUsStatesOptOutStatusEnum;
+      var notOptedOut = E && E.NOT_OPTED_OUT !== undefined ? E.NOT_OPTED_OUT : 2;
+      var optedOut = E && E.OPTED_OUT !== undefined ? E.OPTED_OUT : 3;
+      var tc = lastTc || (before && before.tc);
+      var gdpr = !!(tc && tc.gdprApplies === true);
+      var us = u.getInitialUsStatesOptOutStatus();
+      if ((us === notOptedOut || us === optedOut) && !gdpr && typeof u.openConfirmationDialog === 'function') {
+        u.openConfirmationDialog(function (userDidOptOut) {
+          if (userDidOptOut) {
+            state.us = OPTED_OUT;   // ad personalization and analytics stay denied
+          } else {
+            try { state.us = u.getInitialUsStatesOptOutStatus(); } catch (e) { state.us = null; }
+            // no opt-out: restore the signals withdrawn on click unless the CMP already sent new ones
+            if (state.tc === null && !state.cmReady) { state.tc = before.tc; state.cmReady = before.cmReady; }
+          }
+          apply();
+        });
+        return;
+      }
+    }
+    fc.showRevocationMessage();
   }
   function privacyButtons() {
     document.querySelectorAll('[data-privacy-settings]').forEach(function (b) {
       b.addEventListener('click', function () {
         // withdraw at once; the CMP reports the new decision through the listeners above
+        var before = { tc: state.tc, cmReady: state.cmReady };
         state.tc = null; state.cmReady = false; apply();
         window.googlefc = window.googlefc || {};
         window.googlefc.callbackQueue = window.googlefc.callbackQueue || [];
         window.googlefc.callbackQueue.push(function () {
-          try { window.googlefc.showRevocationMessage(); } catch (e) { /* CMP not available */ }
+          try { openPrivacyMessage(before); } catch (e) { /* CMP not available */ }
         });
         loadAdScript();
       });

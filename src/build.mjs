@@ -14,7 +14,7 @@ const GA = 'G-T00HRG2YVF';
 const REVIEWED = 'November 4, 2026';
 const REVIEWED_ISO = '2026-11-04';
 const PUBLISHED_ISO = '2026-10-31';
-const V = '20261104a';
+const V = '20261104b';
 // Pages that never load the AdSense script (legal and contact pages, 404).
 const NO_LOADER = ['/imprint/', '/privacy/', '/contact/'];
 
