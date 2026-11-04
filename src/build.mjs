@@ -11,10 +11,14 @@ const SITE = 'https://balconybloomguide.com';
 const NAME = 'Balcony Bloom Guide';
 const CLIENT = 'ca-pub-7811071715414905';
 const GA = 'G-T00HRG2YVF';
-const REVIEWED = 'November 4, 2026';
-const REVIEWED_ISO = '2026-11-04';
+// Review dates: pages whose content did not change since the October 31 rebuild keep that date
+// (the 17 guides, the four tools, imprint, contact); pages that are new or changed carry November 4.
+const REVIEWED = 'October 31, 2026';
+const REVIEWED_ISO = '2026-10-31';
+const UPDATED = 'November 4, 2026';
+const UPDATED_ISO = '2026-11-04';
 const PUBLISHED_ISO = '2026-10-31';
-const V = '20261104b';
+const V = '20261104c';
 // Pages that never load the AdSense script (legal and contact pages, 404).
 const NO_LOADER = ['/imprint/', '/privacy/', '/contact/'];
 
@@ -207,11 +211,11 @@ ${lede}
 ${AD('top')}
 ${rest}
 ${relatedCards(m.related)}
-<p class="reviewed">Published: November 4, 2026. Found an error? <a href="/contact/">Tell us</a>.</p>
+<p class="reviewed">Published: ${UPDATED}. Found an error? <a href="/contact/">Tell us</a>.</p>
 </article><aside class="side" aria-label="Advertisement">${AD('side')}</aside></div>`;
-  pages.push({ path: `/plants/${s}/`, kind: 'guide', ads: true, title: m.title, description: m.description, html, navCurrent: '/plants/',
+  pages.push({ path: `/plants/${s}/`, kind: 'guide', ads: true, modified: UPDATED_ISO, title: m.title, description: m.description, html, navCurrent: '/plants/',
     crumbs: [['Home', '/'], ['Plant profiles', '/plants/'], [short, `/plants/${s}/`]],
-    schema: [{ '@type': 'Article', headline: m.h1, description: m.description, datePublished: REVIEWED_ISO, dateModified: REVIEWED_ISO, inLanguage: 'en', mainEntityOfPage: `${SITE}/plants/${s}/`, publisher: { '@type': 'Organization', name: 'AdStern', url: SITE + '/about/' } }, faq].filter(Boolean) });
+    schema: [{ '@type': 'Article', headline: m.h1, description: m.description, datePublished: UPDATED_ISO, dateModified: UPDATED_ISO, inLanguage: 'en', mainEntityOfPage: `${SITE}/plants/${s}/`, publisher: { '@type': 'Organization', name: 'AdStern', url: SITE + '/about/' } }, faq].filter(Boolean) });
 }
 
 // tools
@@ -238,13 +242,13 @@ ${relatedCards(m.related)}
 const plantCard = ([s]) => `<a class="card" href="/plants/${s}/"><span class="k">${esc(PLANTMETA[s].kicker)}</span><h3>${esc(PLANTMETA[s].h1)}</h3><p>${esc(PLANTMETA[s].description)}</p></a>`;
 const guideCard = (s) => `<a class="card" href="/guides/${s}/"><span class="k">${esc(GUIDEMETA[s].kicker)}</span><h3>${esc(GUIDEMETA[s].h1)}</h3><p>${esc(GUIDEMETA[s].description)}</p></a>`;
 const toolCard = (t) => `<a class="card" href="/tools/${t}/"><span class="k">Tool</span><h3>${esc(TOOLMETA[t].h1)}</h3><p>${esc(TOOLMETA[t].description)}</p></a>`;
-pages.push({ path: '/guides/', kind: 'index', ads: false, title: 'Balcony gardening guides by sun, weight, wind and season', description: 'All Balcony Bloom Guide articles: plants by balcony direction, weight and wind, herbs, tomatoes and strawberries in containers, watering, winter care and renting.',
+pages.push({ path: '/guides/', kind: 'index', ads: false, modified: UPDATED_ISO, title: 'Balcony gardening guides by sun, weight, wind and season', description: 'All Balcony Bloom Guide articles: plants by balcony direction, weight and wind, herbs, tomatoes and strawberries in containers, watering, winter care and renting.',
   crumbs: [['Home', '/'], ['Guides', '/guides/']],
   html: `<article style="max-width:none"><span class="kicker">All guides</span><h1>Balcony guides</h1><p class="lede" style="max-width:70ch">Seventeen guides, each written for a specific balcony question. Where a number depends on your balcony – sun hours, pot weight, wind, water – the guide links to the tool that calculates it.</p>
 ${GROUPS.map((g) => `<h2 id="${g.key}">${g.name}</h2><div class="cards">${g.slugs.map(guideCard).join('')}</div>`).join('\n')}
 <h2 id="plants">Plant profiles</h2><div class="cards">${PLANTS.map(plantCard).join('')}</div>
 <h2 id="tools">Tools</h2><div class="cards">${TOOLS.map(toolCard).join('')}</div></article>` });
-pages.push({ path: '/tools/', kind: 'index', ads: false, title: 'Free balcony garden tools: sun hours, pot weight, wind, watering', description: 'Four free calculators for balcony gardeners: direct sun hours for railing and back wall, wet pot weight, wind exposure and a watering and holiday planner.',
+pages.push({ path: '/tools/', kind: 'index', ads: false, modified: UPDATED_ISO, title: 'Free balcony garden tools: sun hours, pot weight, wind, watering', description: 'Four free calculators for balcony gardeners: direct sun hours for railing and back wall, wet pot weight, wind exposure and a watering and holiday planner.',
   crumbs: [['Home', '/'], ['Tools', '/tools/']],
   html: `<article style="max-width:none"><span class="kicker">Tools</span><h1>Balcony tools</h1><p class="lede" style="max-width:70ch">Four calculators that work in your browser, without an account. They share one saved balcony profile, so the sun hours you calculate once show up on the guide pages and in the watering planner.</p><div class="cards">${TOOLS.map(toolCard).join('')}</div><div style="max-width:70ch"><h2 id="order">In which order to use them</h2><p>Start with the sun: the simulator tells you which spot on your balcony counts as full sun, part sun or shade in each month, and that decides what you can grow where. Then plan the pots: once you know which plants go where, the pot weight planner adds up what the filled containers weigh, so you can keep heavy pots near the wall and hand a data sheet to your building manager if you plan something big.</p><p>The wind check matters most above the third or fourth floor and on corners; its result also feeds the watering planner, because wind dries pots faster. The watering planner comes last, when you know the pots, their sun and the wind, and it is the one to open again before a trip.</p><p>All four are estimates built on stated assumptions. Below is what each one calculates, where its limits are and a worked example; each tool page explains the method in full under the calculator.</p>
 <h2 id="sun-hours">Sun &amp; Shade Simulator</h2>
@@ -265,7 +269,7 @@ pages.push({ path: '/tools/', kind: 'index', ads: false, title: 'Free balcony ga
 <p><b>Example.</b> A 12 in (30 cm) plastic pot with a bushy plant, 6 hours of sun on warm days and a Moderate wind class uses about 0.38 L a day; its buffer of about 1.25 L lasts a little over 3 days, so the advice is "check every 2–3 days". For a week away it needs a reservoir of about 2 L.</p></div></article>` });
 
 // plant profiles hub
-pages.push({ path: '/plants/', kind: 'index', ads: false, title: 'Balcony plant profiles: sun hours, pot weight, wind and winter', description: 'Ten balcony plant profiles, from geraniums and lavender to cherry tomatoes and hydrangeas: sun hours, pot size and wet weight, wind, water and winter.',
+pages.push({ path: '/plants/', kind: 'index', ads: false, modified: UPDATED_ISO, title: 'Balcony plant profiles: sun hours, pot weight, wind and winter', description: 'Ten balcony plant profiles, from geraniums and lavender to cherry tomatoes and hydrangeas: sun hours, pot size and wet weight, wind, water and winter.',
   crumbs: [['Home', '/'], ['Plant profiles', '/plants/']],
   html: `<article style="max-width:none"><span class="kicker">Plant profiles</span><h1>Balcony plant profiles</h1><p class="lede" style="max-width:70ch">Ten plants that people most often grow on balconies, each described for a container several floors up rather than for a garden bed: how many hours of direct sun it needs, how big and how heavy its pot gets when the mix is wet, how it copes with wind and heat, how to water and feed it and what to do with it in winter in your USDA zone.</p>
 <div class="cards">${PLANTS.map(plantCard).join('')}</div>
@@ -273,7 +277,7 @@ pages.push({ path: '/plants/', kind: 'index', ads: false, title: 'Balcony plant 
 <tr><td><a href="/plants/geranium-pelargonium/">Geranium</a></td><td>6 h+</td><td>8–10 in or railing box</td><td>Good</td><td>Indoors, cuttings or bare-root</td></tr>
 <tr><td><a href="/plants/lavender/">Lavender</a></td><td>6–8 h+</td><td>12–14 in, porous</td><td>Good</td><td>Outdoors from zone 8, sheltered in 6–7</td></tr>
 <tr><td><a href="/plants/petunia/">Petunia</a></td><td>6 h+</td><td>10–12 in, basket, box</td><td>Moderate</td><td>Grown as an annual</td></tr>
-<tr><td><a href="/plants/rosemary/">Rosemary</a></td><td>6–8 h+</td><td>12–16 in</td><td>Good</td><td>Outdoors from zone 9, cool and bright indoors below 7</td></tr>
+<tr><td><a href="/plants/rosemary/">Rosemary</a></td><td>6–8 h+</td><td>12–16 in</td><td>Good</td><td>Outdoors from zone 9; zone 8 sheltered and wrapped, in during hard frost; zone 7 and colder cool and bright indoors</td></tr>
 <tr><td><a href="/plants/strawberry/">Strawberry</a></td><td>6–8 h</td><td>8 in per plant, rail box</td><td>Good</td><td>Pots grouped and wrapped, or replant</td></tr>
 <tr><td><a href="/plants/cherry-tomato/">Cherry tomato</a></td><td>6–8 h</td><td>2–10 gal by type</td><td>Moderate, staked</td><td>Annual</td></tr>
 <tr><td><a href="/plants/basil/">Basil</a></td><td>6–8 h</td><td>8 in+</td><td>Poor</td><td>Annual</td></tr>
@@ -289,7 +293,7 @@ pages.push({ path: '/plants/', kind: 'index', ads: false, title: 'Balcony plant 
 const home = HOME({ GROUPS, GUIDEMETA, TOOLMETA, TOOLS, esc });
 home.html = home.html.replace('<section style="max-width:74ch"><h2 id="why">', `<h2 id="plants">Plant profiles</h2><div class="cards">${PLANTS.slice(0, 6).map(plantCard).join('')}</div>\n<p><a href="/plants/">All ten plant profiles →</a></p>\n<section style="max-width:74ch"><h2 id="why">`);
 if (!home.html.includes('id="plants"')) throw new Error('home: plant block not placed');
-pages.push({ ...home, path: '/', kind: 'home', ads: false, crumbs: [['Home', '/']],
+pages.push({ ...home, path: '/', kind: 'home', ads: false, modified: UPDATED_ISO, crumbs: [['Home', '/']],
   schema: [{ '@type': 'WebSite', name: NAME, url: SITE + '/', inLanguage: 'en' }] });
 for (const p of STATIC_PAGES) pages.push({ ...p, kind: 'static', ads: false });
 
@@ -313,7 +317,7 @@ for (const [from, to] of Object.entries(REDIRECTS)) {
 const indexable = pages.filter((p) => !p.noindex);
 write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${indexable.map((p) => `  <url><loc>${SITE}${p.path}</loc><lastmod>${REVIEWED_ISO}</lastmod></url>`).join('\n')}
+${indexable.map((p) => `  <url><loc>${SITE}${p.path}</loc><lastmod>${p.modified || REVIEWED_ISO}</lastmod></url>`).join('\n')}
 </urlset>
 `);
 write('robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);

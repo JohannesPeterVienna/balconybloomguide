@@ -44,6 +44,18 @@ if (!p404.includes('noindex')) problems.push('404 must be noindex');
 if (p404.includes('adsbygoogle.js')) problems.push('AdSense loader on the 404 page');
 if (fs.readFileSync(path.join(DOCS, 'CNAME'), 'utf8') !== 'balconybloomguide.com') problems.push('CNAME must be exactly balconybloomguide.com without newline');
 if (fs.readFileSync(path.join(DOCS, 'ads.txt'), 'utf8') !== 'google.com, pub-7811071715414905, DIRECT, f08c47fec0942fa0\n') problems.push('ads.txt changed');
-for (const m of fs.readFileSync(path.join(DOCS, 'sitemap.xml'), 'utf8').matchAll(/<lastmod>([^<]*)<\/lastmod>/g)) if (m[1] !== '2026-11-04') { problems.push('sitemap lastmod ' + m[1]); break; }
+// lastmod changes only for pages whose content changed: the guides, tools, imprint and contact page keep the
+// October 31 rebuild date; plant profiles, overviews, home, About and privacy carry November 4. The visible date must match.
+const CHANGED = /^\/(plants\/.*|guides\/|tools\/|about\/|privacy\/)?$/;
+for (const m of fs.readFileSync(path.join(DOCS, 'sitemap.xml'), 'utf8').matchAll(/<loc>https:\/\/balconybloomguide\.com([^<]*)<\/loc><lastmod>([^<]*)<\/lastmod>/g)) {
+  const want = CHANGED.test(m[1]) ? '2026-11-04' : '2026-10-31';
+  if (m[2] !== want) problems.push(`sitemap lastmod ${m[1]} ${m[2]} instead of ${want}`);
+  const h = fs.readFileSync(path.join(DOCS, m[1], 'index.html'), 'utf8');
+  const shown = want === '2026-11-04' ? 'November 4, 2026' : 'October 31, 2026';
+  const mod = (h.match(/"dateModified":"([^"]*)"/) || [])[1];
+  if (mod && mod !== want) problems.push(`${m[1]}: dateModified ${mod} instead of ${want}`);
+  const vis = (h.match(/<p class="reviewed">[^<]*?(\w+ \d+, 2026)/) || [])[1];
+  if (vis && vis !== shown) problems.push(`${m[1]}: visible date ${vis} instead of ${shown}`);
+}
 console.log(problems.length ? problems.join('\n') : `${sitemap.length} sitemap pages OK`);
 process.exit(problems.length ? 1 : 0);
