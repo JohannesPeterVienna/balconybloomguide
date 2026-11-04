@@ -25,6 +25,7 @@ for (const width of [390, 1366]) {
   for (const u of urls) {
     const page = await ctx.newPage();
     const errs = [];
+    page.on('response', (res) => { if (res.status() === 404 && res.url().startsWith(base)) errs.push('local 404: ' + res.url().slice(base.length)); });
     page.on('pageerror', (e) => errs.push('pageerror: ' + e.message));
     page.on('console', (m) => { if (m.type() === 'error' && !/net::ERR_FAILED|Failed to load resource/.test(m.text())) errs.push('console: ' + m.text()); });
     await page.goto(base + u, { waitUntil: 'load' });
@@ -34,7 +35,25 @@ for (const width of [390, 1366]) {
       results: (document.querySelector('.results') || {}).innerText || null,
       visibleAds: [...document.querySelectorAll('.ad')].filter((a) => !a.hidden).length
     }));
-    const probs = [...errs];
+    // all ad boxes forced visible (as if every slot ID were filled): at least 150 px to any button, input, select, textarea or summary
+    const near = await page.evaluate(() => {
+      const ads = [...document.querySelectorAll('.ad')];
+      for (const a of ads) { a.hidden = false; a.style.minHeight = '250px'; }
+      const ctl = [...document.querySelectorAll('button, input, select, textarea, summary')].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden'; });
+      const out = [];
+      for (const a of ads) {
+        const r = a.getBoundingClientRect();
+        if (!r.width || !r.height) continue;
+        for (const c of ctl) {
+          const q = c.getBoundingClientRect();
+          const d = Math.hypot(Math.max(0, q.left - r.right, r.left - q.right), Math.max(0, q.top - r.bottom, r.top - q.bottom));
+          if (d < 150) out.push(`${a.dataset.slot} ad ${Math.round(d)} px from ${c.tagName.toLowerCase()}${c.id ? '#' + c.id : ''} "${(c.textContent || c.name || '').trim().slice(0, 30)}"`);
+        }
+      }
+      for (const a of ads) { a.hidden = true; a.style.minHeight = ''; }
+      return out;
+    });
+    const probs = [...errs, ...near];
     if (info.overflow > 1) probs.push('horizontal overflow ' + info.overflow + 'px');
     if (info.visibleAds) probs.push('ad box visible without slot id');
     if (u.startsWith('/tools/') && u !== '/tools/' && u !== '/tools/pot-weight/' && !(info.results && info.results.length > 40)) probs.push('tool shows no result: ' + info.results);
