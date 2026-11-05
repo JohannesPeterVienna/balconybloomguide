@@ -48,7 +48,9 @@ function readFragment(file) {
   return { meta: JSON.parse(m[1]), body: raw.slice(m[0].length).trim() };
 }
 
-const ICON = `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#1F3328"/><circle cx="27" cy="13" r="6" fill="#E2A022"/><path d="M8 31h24" stroke="#EDF1E8" stroke-width="2"/><path d="M11 31v-4h18v4" fill="#46588F"/><path d="M15 27c0-5 2-8 5-10M20 27c0-4 3-6 6-7M17 21c-2-1-4-1-6 0 2 2 4 2 6 0z" stroke="#9CC3A8" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>`;
+// Google cuts titles at ~60–65 characters: drop the site name if the title gets too long
+const kurzTitel = (t) => (t.length > 65 ? t.replace(/\s[–|-]\s(Balcony Bloom Guide)$/, '') : t);
+const ICON = `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#1A1A1A"/><circle cx="27" cy="13" r="6" fill="#E2A022"/><path d="M8 31h24" stroke="#F7F6F2" stroke-width="2"/><path d="M11 31v-4h18v4" fill="#46588F"/><path d="M15 27c0-5 2-8 5-10M20 27c0-4 3-6 6-7M17 21c-2-1-4-1-6 0 2 2 4 2 6 0z" stroke="#9CC3A8" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>`;
 
 function nav(current) {
   const items = [['/', 'Home'], ['/tools/sun-hours/', 'Sun simulator'], ['/tools/pot-weight/', 'Pot weight'], ['/tools/wind-check/', 'Wind check'], ['/tools/watering-planner/', 'Watering'], ['/plants/', 'Plants'], ['/guides/', 'Guides'], ['/about/', 'About']];
@@ -89,7 +91,7 @@ function layout(pg) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(pg.title)}</title>
+<title>${esc(kurzTitel(pg.title))}</title>
 <meta name="description" content="${esc(pg.description)}">
 <link rel="canonical" href="${url}">
 <meta name="robots" content="${pg.noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large'}">
@@ -98,9 +100,13 @@ function layout(pg) {
 <meta property="og:title" content="${esc(pg.title)}">
 <meta property="og:description" content="${esc(pg.description)}">
 <meta property="og:url" content="${url}">
+<meta property="og:image" content="${SITE}/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta property="og:site_name" content="${NAME}">
 <meta property="og:locale" content="en_US">
-<meta name="theme-color" content="#1F3328">
+<meta name="theme-color" content="#F7F6F2">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/assets/fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/young-serif-400.woff2" as="font" type="font/woff2" crossorigin>

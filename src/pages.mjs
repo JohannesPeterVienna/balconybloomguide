@@ -36,6 +36,14 @@ ${sketch}
 <li><a href="/tools/wind-check/">How windy is it up here</a>, and which pots, fixings and plants cope?</li>
 <li><a href="/tools/watering-planner/">How often do I water</a> – and how big a reservoir do I need for a week away?</li>
 </ol></section>
+<section class="vorteile" aria-labelledby="vt"><h2 id="vt">What you get</h2><ul>
+<li><b>Sun hours for your spot</b><span>Railing, middle and back wall – calculated from your orientation, floor and the balcony above.</span></li>
+<li><b>Weight you can show</b><span>Wet pot weight per square foot, ready for the building manager.</span></li>
+<li><b>Wind and watering, planned</b><span>Which pots and plants cope up here, and how much water a week away needs.</span></li>
+<li><b>Plants that fit</b><span>Profiles with sun hours, container size and hardiness – not just “full sun”.</span></li>
+<li><b>Sources you can check</b><span>Extension services, NOAA and RHS cited on every page.</span></li>
+<li><b>Free, no sign-up</b><span>Everything runs in your browser; your balcony profile stays on your device.</span></li>
+</ul></section>
 ${GROUPS.map((g) => `<h2 id="${g.key}">${g.name}</h2><div class="cards">${g.slugs.map(card).join('')}</div>`).join('\n')}
 <section style="max-width:74ch"><h2 id="why">Why start from the balcony, not the plant</h2>
 <p>Most gardening advice is written for open ground. A balcony is a box hanging on a wall: the floor above cuts off the high summer sun, the side walls cut off the early and late sun, and the wind at the eighth floor is not the wind at street level. Pots hold a few gallons of mix that dry out in a day, and every gallon of wet mix weighs about six pounds.</p>
