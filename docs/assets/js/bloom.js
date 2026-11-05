@@ -86,10 +86,11 @@
       try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { box.hidden = true; }
     });
   }
-  // Without :has() the CSS cannot see the ad status, so .ad-live mirrors it: set only for data-ad-status="filled".
+  // Without :has() the CSS cannot see the ad status, so .ad-live mirrors it: set for data-ad-status "filled" or
+  // "unfill-optimized" (label and margin then show). The ins itself is never hidden.
   function openWhenFilled(box, ins) {
     if (!(window.CSS && CSS.supports && CSS.supports('selector(:has(a))'))) document.documentElement.classList.add('nohas');
-    function mirror() { box.classList.toggle('ad-live', ins.getAttribute('data-ad-status') === 'filled'); }
+    function mirror() { box.classList.toggle('ad-live', ['filled', 'unfill-optimized'].indexOf(ins.getAttribute('data-ad-status')) !== -1); }
     mirror();
     if (window.MutationObserver) new MutationObserver(mirror).observe(ins, { attributes: true, attributeFilter: ['data-ad-status'] });
   }

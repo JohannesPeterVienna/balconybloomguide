@@ -18,7 +18,7 @@ const REVIEWED_ISO = '2026-10-31';
 const UPDATED = 'November 4, 2026';
 const UPDATED_ISO = '2026-11-04';
 const PUBLISHED_ISO = '2026-10-31';
-const V = '20261105b';
+const V = '20261105c';
 // Guides corrected on November 4 (rosemary hardiness aligned with the plant profile).
 const GUIDES_CHANGED = ['windy-balcony-plants', 'south-facing-balcony-plants', 'overwintering-balcony-plants'];
 // Pages that never load the AdSense script (legal and contact pages, 404).
