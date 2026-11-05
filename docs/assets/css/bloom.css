@@ -150,9 +150,9 @@ input:focus, select:focus { border-color: var(--focus); }
 /* An ad box stays out of sight – no “Advertisement” label, no margin, no height – until Google has actually
    placed an ad (data-ad-status="filled" on the ins). The width is kept so AdSense can measure the box.
    Done with :has(); bloom.js adds html.nohas and .ad-live as a fallback for browsers without it. */
-.ad:not(:has(ins.adsbygoogle[data-ad-status="filled"])),
+.ad:not(:has(ins.adsbygoogle[data-ad-status="filled"])) { height: 0 !important; min-height: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; }
 .nohas .ad:not(.ad-live) { height: 0 !important; min-height: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; }
-.ad:not(:has(ins.adsbygoogle[data-ad-status="filled"])) .ad-label,
+.ad:not(:has(ins.adsbygoogle[data-ad-status="filled"])) .ad-label { display: none; }
 .nohas .ad:not(.ad-live) .ad-label { display: none; }
 
 footer.foot { background: var(--band); color: var(--band-ink); margin-top: 40px; padding: 28px 0 36px; font-size: .93rem; }
