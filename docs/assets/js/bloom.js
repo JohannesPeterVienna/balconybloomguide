@@ -82,8 +82,16 @@
       if (box.getAttribute('data-slot') !== 'side') ins.setAttribute('data-full-width-responsive', 'true');
       box.appendChild(ins);
       box.hidden = false;
+      openWhenFilled(box, ins);
       try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { box.hidden = true; }
     });
+  }
+  // Without :has() the CSS cannot see the ad status, so .ad-live mirrors it: set only for data-ad-status="filled".
+  function openWhenFilled(box, ins) {
+    if (!(window.CSS && CSS.supports && CSS.supports('selector(:has(a))'))) document.documentElement.classList.add('nohas');
+    function mirror() { box.classList.toggle('ad-live', ins.getAttribute('data-ad-status') === 'filled'); }
+    mirror();
+    if (window.MutationObserver) new MutationObserver(mirror).observe(ins, { attributes: true, attributeFilter: ['data-ad-status'] });
   }
 
   /* ---------- consent + analytics ---------- */

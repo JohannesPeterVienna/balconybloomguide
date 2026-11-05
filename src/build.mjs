@@ -18,7 +18,7 @@ const REVIEWED_ISO = '2026-10-31';
 const UPDATED = 'November 4, 2026';
 const UPDATED_ISO = '2026-11-04';
 const PUBLISHED_ISO = '2026-10-31';
-const V = '20261105a';
+const V = '20261105b';
 // Guides corrected on November 4 (rosemary hardiness aligned with the plant profile).
 const GUIDES_CHANGED = ['windy-balcony-plants', 'south-facing-balcony-plants', 'overwintering-balcony-plants'];
 // Pages that never load the AdSense script (legal and contact pages, 404).
@@ -314,7 +314,9 @@ write('404.html', layout({ path: '/404.html', kind: 'static', ads: false, noinde
   html: `<article><h1>This page does not exist</h1><p class="lede">The address may have changed when the site was rebuilt in October 2026.</p><p>Try the <a href="/tools/sun-hours/">Sun &amp; Shade Simulator</a>, the <a href="/guides/">list of all guides</a> or the <a href="/">home page</a>.</p></article>` }).replace(/<link rel="canonical"[^>]*>\n/, ''));
 
 // old addresses → new (static hosting: noindex page with refresh + canonical)
-const REDIRECTS = { 'about.html': '/about/', 'imprint.html': '/imprint/', 'privacy.html': '/privacy/', 'advertise.html': '/contact/', 'contact.html': '/contact/' };
+const REDIRECTS = { 'about.html': '/about/', 'imprint.html': '/imprint/', 'privacy.html': '/privacy/', 'advertise.html': '/contact/', 'contact.html': '/contact/',
+  // old tool pages still in Google's index (Nov 2026) → the tools that replaced them
+  'pot-planner.html': '/tools/pot-weight/', 'sun-diary.html': '/tools/sun-hours/' };
 for (const [from, to] of Object.entries(REDIRECTS)) {
   if (!to) continue;
   write(from, `<!doctype html>
