@@ -184,6 +184,7 @@ footer.foot li { margin-bottom: .45em; }
 
 @media print {
   .mast .tag, nav.main, .crumbs, .ad, footer.foot, .side, .noprint, .band, .almanote, .almanote-live { display: none !important; }
+  body { padding-bottom: 0 !important; }
   body { background: #fff; color: #000; }
   .tool { border: 0; padding: 0; }
 }

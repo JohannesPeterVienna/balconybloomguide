@@ -48,10 +48,24 @@
   function loadConsentScript() {
     if (consentScriptLoaded || document.querySelector('script[src*="fundingchoicesmessages.google.com"]')) return;
     consentScriptLoaded = true;
+    signalGooglefcPresent();
     var s = document.createElement('script');
     s.async = true;
     s.src = 'https://fundingchoicesmessages.google.com/i/pub-7811071715414905?ers=1';
     document.head.appendChild(s);
+  }
+  // as in Google's own snippet: an invisible iframe named "googlefcPresent" tells the CMP it is present
+  function signalGooglefcPresent() {
+    try {
+      if (window.frames && window.frames.googlefcPresent) return;
+      if (!document.body) { if (typeof setTimeout === 'function') setTimeout(signalGooglefcPresent, 0); return; }
+      var f = document.createElement('iframe');
+      f.style.cssText = 'width:0;height:0;border:none;z-index:-1000;left:-1000px;top:-1000px;display:none';
+      f.name = 'googlefcPresent';
+      f.setAttribute('aria-hidden', 'true');
+      f.tabIndex = -1;
+      document.body.appendChild(f);
+    } catch (e) { /* ignore */ }
   }
   function fillSlots() {
     if (!adsOn) return;
@@ -169,14 +183,16 @@
       closeNote(false);
     }
   }
-  function startStats() {
+  var statsTimer = null;
+  function startStats(byButton) {
+    if (statsTimer !== null) { try { clearTimeout(statsTimer); } catch (e) { /* ignore */ } statsTimer = null; }
     if (stats.phase !== 'waiting') return;
     if (window.BBConsent.cmpSpoke(state.tc)) { statsSeeTc(state.tc); apply(); return; }
     stats.phase = 'active';
     stats.pick = statsRead();
     state.last = '';
     apply();
-    if (!stats.pick && !statsBlocked()) openNote(null);   // GPC / U.S. opt-out: nothing is pushed
+    if (!byButton && !stats.pick && !statsBlocked()) openNote(null);   // GPC / U.S. opt-out: nothing is pushed
   }
   // Later U.S. opt-outs (after the initial status) arrive through the IAB GPP API of Google's CMP.
   // Only ever used to deny; a missing API or a failed call leaves the current (denied-by-default) state.
@@ -260,6 +276,8 @@
     document.querySelectorAll('[data-privacy-settings]').forEach(function (b) {
       b.addEventListener('click', function () {
         // interim mode or a page without Google code: our own window to view, change or withdraw
+        // first 3 s: decide now – Google's way only if its CMP has already spoken
+        if (stats.phase === 'waiting') startStats(true);
         if (stats.phase === 'active' || stats.phase === 'settings') { openNote(b); return; }
         openGoogleChoices();
       });
@@ -320,14 +338,31 @@
     el.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') { e.preventDefault(); closeNote(true); }   // Escape = no choice, never consent
     });
-    var live = document.createElement('p');
-    live.className = 'almanote-live';
-    live.setAttribute('role', 'status');
     // early in the tab order (right after "Skip to content"), shown fixed at the bottom: no layout shift
     var skip = document.querySelector('.skip');
-    if (skip && skip.parentNode === document.body && skip.after) skip.after(el, live);
-    else { document.body.insertBefore(live, document.body.firstChild); document.body.insertBefore(el, live); }
-    note = el; noteLive = live;
+    if (skip && skip.parentNode === document.body && skip.after) skip.after(el);
+    else document.body.insertBefore(el, document.body.firstChild);
+    note = el;
+  }
+  // the live region exists from page start, so screen readers pick up later announcements
+  function makeLive() {
+    try {
+      if (noteLive || !document.body) return;
+      var live = document.createElement('p');
+      live.className = 'almanote-live';
+      live.setAttribute('role', 'status');
+      var skip = document.querySelector('.skip');
+      if (skip && skip.parentNode === document.body && skip.after) skip.after(live);
+      else document.body.insertBefore(live, document.body.firstChild);
+      noteLive = live;
+    } catch (e) { /* no DOM */ }
+  }
+  function announce(text) {
+    makeLive();
+    if (!noteLive) return;
+    noteLive.textContent = '';
+    if (typeof setTimeout === 'function') setTimeout(function () { noteLive.textContent = text; }, 150);
+    else noteLive.textContent = text;
   }
   function fillNote() {
     var title = note.querySelector('#almanote-title'), text = note.querySelector('#almanote-text'), now = note.querySelector('[data-note-now]');
@@ -370,7 +405,7 @@
       noteRoom();
       if (!noteResize) { noteResize = true; window.addEventListener('resize', noteRoom); }
       if (noteOpener) note.querySelector('#almanote-title').focus({ preventScroll: true });   // asked for: focus moves in
-      else noteLive.textContent = 'A question about visitor statistics is shown at the bottom of the page.';
+      else announce('A question about visitor statistics is shown at the bottom of the page.');
     } catch (e) { /* no DOM: nothing to show */ }
   }
   function closeNote(returnFocus) {
@@ -388,15 +423,14 @@
     stats.pick = statsSave(choice);
     if (choice === 'denied') {
       window[GA_OFF] = true;
-      gtag('consent', 'update', { analytics_storage: 'denied' });
-      state.last = 'stats:false';
+      if (stats.phase === 'active') { gtag('consent', 'update', { analytics_storage: 'denied' }); state.last = 'stats:false'; }
       eraseGaCookies();
     }
-    apply();
+    if (stats.phase === 'active') apply();   // pages without Google code: stored only, no gtag update
     closeNote(true);
-    if (noteLive) noteLive.textContent = choice === 'denied' ? 'Saved: statistics are switched off.'
-      : stats.phase === 'settings' ? 'Saved: statistics allowed. Nothing is measured on this page.'
-      : 'Saved: statistics with Google Analytics are switched on.';
+    announce(stats.phase === 'settings'
+      ? 'Saved for the other pages of this site: statistics ' + (choice === 'denied' ? 'declined' : 'allowed') + '. Nothing is measured on this page.'
+      : choice === 'denied' ? 'Saved: statistics are switched off.' : 'Saved: statistics with Google Analytics are switched on.');
   }
 
   /* ---------- saved balcony profile (localStorage only) ---------- */
@@ -422,10 +456,11 @@
   privacyButtons();
   if (adsOn) { loadAdScript(); fillSlots(); }
   if (window.BBConsent) {
+    makeLive();
     var stored = statsRead();
     if (stored && stored.choice === 'denied') eraseGaCookies();   // declined earlier: no GA cookie may linger
     watchConsent();
-    if (stats.phase === 'waiting' && typeof setTimeout === 'function') setTimeout(startStats, window.BBConsent.STATS.WAIT_MS);
+    if (stats.phase === 'waiting' && typeof setTimeout === 'function') statsTimer = setTimeout(function () { statsTimer = null; startStats(false); }, window.BBConsent.STATS.WAIT_MS);
   } else stats.phase = 'retired';
   showProfile();
 })();

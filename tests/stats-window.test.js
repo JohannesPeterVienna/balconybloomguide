@@ -38,6 +38,8 @@ function site({ cmp = 'hidden', stored, gpc = false, googleOff = false, cookies 
   let jar = cookies.slice();
   const doc = { inserted: [], activeElement: null };
   const body = el(doc, 'body');
+  body.appended = [];
+  body.appendChild = (x) => { body.appended.push(x); return x; };
   const skip = el(doc, 'a.skip'); skip.parentNode = body;
   const button = el(doc, 'button[data-privacy-settings]');
   Object.assign(doc, {
@@ -151,6 +153,8 @@ test('CMP loads but stays hidden: window after 3 s, not before; analytics stays 
   s.advance(1);
   assert.equal(s.noteOpen(), true);
   assert.equal(s.note().attrs['aria-modal'], 'false');
+  assert.equal(s.live().textContent, '', 'live region exists first, text follows a moment later');
+  s.advance(200);
   assert.match(s.live().textContent, /statistics/);
   assert.equal(s.window[OFF], true);
   assert.equal(s.gaScripts(), 0);
@@ -217,6 +221,7 @@ test('Allow sets only analytics_storage granted and loads gtag.js once (signals 
   assert.deepEqual({ ...s.configs[0] }, { allow_google_signals: false, allow_ad_personalization_signals: false });
   assert.equal(JSON.parse(s.store.get(KEY)).choice, 'granted');
   assert.equal(s.noteOpen(), false);
+  s.advance(200);
   assert.match(s.live().textContent, /switched on/);
   // reopen and allow again: still one script
   s.button.handlers.click(); s.pick('granted');
@@ -423,4 +428,55 @@ test('content pages: the Google choices link is not shown in the window', () => 
   const s = site({ cmp: 'hidden' });
   s.advance(3000);
   assert.equal(s.note().querySelector('[data-note-google]').hidden, true);
+});
+
+test('"Privacy settings" in the first 3 s with a silent CMP: window opens at once (focus on heading), no second pop-up, no Google call', () => {
+  const s = site({ cmp: 'hidden' });
+  s.advance(1000);
+  s.button.handlers.click();
+  assert.equal(s.noteOpen(), true);
+  assert.ok(s.note().querySelector('#almanote-title').focused > 0);
+  s.ready();
+  assert.equal(s.events.includes('revocation'), false);
+  s.pick('close');
+  s.advance(5000);
+  assert.equal(s.noteOpen(), false, 'the 3 s timer was cancelled');
+});
+
+test('"Privacy settings" in the first 3 s after Google has spoken: Google\'s way, no window', () => {
+  const s = site({ cmp: 'manual' });
+  s.tcf({ gdprApplies: true, eventStatus: 'tcloaded', tcString: 'CQ', purpose: { consents: { 1: true } }, vendor: { consents: { 755: true } } });
+  s.advance(1000);
+  s.button.handlers.click(); s.ready();
+  assert.equal(s.noteOpen(), false);
+  assert.ok(s.events.includes('revocation'));
+});
+
+test('pages without Google code: Allow/Decline send no gtag update and announce "saved for the other pages"', () => {
+  const s = site({ cmp: 'none', googleOff: true, cookies: ['_ga=GA1.1.9'] });
+  const n = s.updates.length;
+  s.button.handlers.click(); s.pick('granted');
+  s.advance(200);
+  assert.match(s.live().textContent, /Saved for the other pages.*allowed.*Nothing is measured on this page/);
+  s.button.handlers.click(); s.pick('denied');
+  assert.equal(s.updates.length, n, 'no consent update');
+  assert.deepEqual(s.jar(), [], 'GA cookies still deleted on Decline');
+});
+
+test('Google consent script on pages without Google code adds the googlefcPresent iframe once', () => {
+  const s = site({ cmp: 'manual', googleOff: true });
+  s.button.handlers.click(); s.pick('google');
+  s.button.handlers.click();
+  const frames = s.doc.body.appended.filter((x) => x.name === 'googlefcPresent');
+  s.pick('google');
+  assert.equal(s.doc.body.appended.filter((x) => x.name === 'googlefcPresent').length, 1);
+  assert.equal(frames.length, 1);
+  assert.equal(s.scripts.length, 1);
+});
+
+test('print: window hidden and its bottom padding removed', () => {
+  const css = fs.readFileSync(path.join(__dirname, '..', 'docs', 'assets', 'css', 'bloom.css'), 'utf8');
+  const print = css.slice(css.indexOf('@media print'));
+  assert.match(print, /\.almanote,[^{]*\{ display: none !important; \}/);
+  assert.match(print, /body \{ padding-bottom: 0 !important; \}/);
 });

@@ -55,8 +55,8 @@ function page(usStatus, withEnum, gpp, gdprApplies = false) {
     }
   };
   runQueue();
-  // a U.S. visitor outside the GDPR who has not opted out
-  tcfListener({ gdprApplies, eventStatus: 'tcloaded' }, true);
+  // Google's CMP has spoken (stored decision, non-empty TC string), so "Privacy settings" takes Google's way
+  tcfListener({ gdprApplies, eventStatus: 'tcloaded', tcString: 'CQ' }, true);
   return { calls, consentUpdates, window, click: () => clickHandler(), runQueue, usstatesoptout, last: () => consentUpdates[consentUpdates.length - 1] };
 }
 
