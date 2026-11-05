@@ -1,25 +1,25 @@
-/* Balcony Bloom Guide – garden almanac. Young Serif (headings) + Atkinson Hyperlegible (text). */
+/* Balcony Bloom Guide – garden almanac in black and white with one sun-yellow accent. Young Serif (headings) + Atkinson Hyperlegible (text). */
 @font-face { font-family: "Young Serif"; src: url(/assets/fonts/young-serif-400.woff2) format("woff2"); font-weight: 400; font-display: swap; }
 @font-face { font-family: "Atkinson Hyperlegible"; src: url(/assets/fonts/atkinson-hyperlegible-latin-400-normal.woff2) format("woff2"); font-weight: 400; font-display: swap; }
 @font-face { font-family: "Atkinson Hyperlegible"; src: url(/assets/fonts/atkinson-hyperlegible-latin-700-normal.woff2) format("woff2"); font-weight: 700; font-display: swap; }
 
 :root {
-  --moss: #1F3328; --paper: #EDF1E8; --card: #F8FAF5; --ink: #1F3328; --muted: #4B5E52;
-  --sun: #E2A022; --sun-bar: #B07A12; --sun-ink: #8A5A00; --shade: #46588F; --shade-soft: #D9DEEC; --rule: #B9C6B6;
-  --link: #2F5D45; --focus: #46588F; --band: #1F3328; --band-ink: #EDF1E8;
+  --moss: #1A1A1A; --paper: #F7F6F2; --card: #FFFFFF; --ink: #1A1A1A; --muted: #55554F;
+  --sun: #E2A022; --sun-bar: #B07A12; --sun-ink: #8A5A00; --shade: #5C5C58; --shade-soft: #E6E4DE; --rule: #D4D1C9;
+  --link: #1A1A1A; --focus: #2B5BD7; --band: #1A1A1A; --band-ink: #F7F6F2;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #142019; --card: #1B2A21; --ink: #E3EADF; --muted: #A9B8AC; --moss: #9CC3A8;
-    --sun: #E8AE3C; --sun-bar: #E8AE3C; --sun-ink: #F0C46A; --shade: #8C9BD0; --shade-soft: #28304A; --rule: #34473A;
-    --link: #A9D3B6; --focus: #B6C1EA; --band: #0E1712; --band-ink: #E3EADF; color-scheme: dark;
+    --paper: #121212; --card: #1B1B1B; --ink: #EDEDEA; --muted: #A3A39E; --moss: #EDEDEA;
+    --sun: #E8AE3C; --sun-bar: #E8AE3C; --sun-ink: #F0C46A; --shade: #A3A39E; --shade-soft: #2A2A27; --rule: #33332F;
+    --link: #EDEDEA; --focus: #8DB0FF; --band: #0B0B0B; --band-ink: #EDEDEA; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --paper: #142019; --card: #1B2A21; --ink: #E3EADF; --muted: #A9B8AC; --moss: #9CC3A8;
-  --sun: #E8AE3C; --sun-bar: #E8AE3C; --sun-ink: #F0C46A; --shade: #8C9BD0; --shade-soft: #28304A; --rule: #34473A;
-  --link: #A9D3B6; --focus: #B6C1EA; --band: #0E1712; --band-ink: #E3EADF; color-scheme: dark;
+  --paper: #121212; --card: #1B1B1B; --ink: #EDEDEA; --muted: #A3A39E; --moss: #EDEDEA;
+  --sun: #E8AE3C; --sun-bar: #E8AE3C; --sun-ink: #F0C46A; --shade: #A3A39E; --shade-soft: #2A2A27; --rule: #33332F;
+  --link: #EDEDEA; --focus: #8DB0FF; --band: #0B0B0B; --band-ink: #EDEDEA; color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -103,7 +103,7 @@ aside > :last-child { margin-bottom: 0; }
 .btn { display: inline-block; background: var(--moss); color: var(--paper); border: 2px solid var(--moss); border-radius: 999px; padding: .55em 1.2em; font: 700 1rem "Atkinson Hyperlegible", sans-serif; text-decoration: none; cursor: pointer; min-height: 44px; }
 .btn.ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
 .btn.sun { background: var(--sun); border-color: var(--sun); color: #1F3328; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn { color: #142019; } :root:not([data-theme="light"]) .btn.ghost { color: var(--ink); } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn { color: #121212; } :root:not([data-theme="light"]) .btn.ghost { color: var(--ink); } }
 .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 
 /* tool panels */
@@ -160,3 +160,10 @@ footer.foot li { margin-bottom: .45em; }
   body { background: #fff; color: #000; }
   .tool { border: 0; padding: 0; }
 }
+
+/* What you get */
+.vorteile { max-width: 74ch; margin: 2rem auto 1rem; }
+.vorteile ul { list-style: none; padding: 0; margin: .6rem 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 1.5rem; border-top: 2px solid var(--ink); }
+.vorteile li { display: flex; flex-direction: column; gap: 2px; padding: .8rem 0; border-bottom: 1px solid var(--rule); }
+.vorteile b::before { content: "✓"; color: var(--sun-bar); margin-right: .45rem; }
+.vorteile span { color: var(--muted); font-size: .93rem; }

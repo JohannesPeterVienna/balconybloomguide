@@ -7,9 +7,10 @@
   'use strict';
   var CLIENT = 'ca-pub-7811071715414905';
   var SLOTS = {
-    top: '',      // 970×250 billboard (≥1024 px) / 728×90 (≥768 px) / 300×250 (mobile), below the tool or the intro
-    side: '',     // 300×600 half page, sidebar from 1200 px, not sticky
-    inline: ''    // 300×250 in long guides
+    // Shared responsive AdSense units “Themen-Websites – …” (account pub-7811071715414905, created 17 Oct 2026)
+    top: '7497607759',     // 970×250 billboard (≥1024 px) / 728×90 (≥768 px) / 300×250 (mobile), below the tool or the intro
+    side: '1292301217',    // 300×600 half page, sidebar from 1200 px, not sticky
+    inline: '1292301217'   // 300×250 in long guides
   };
   var GA_ID = 'G-T00HRG2YVF';
   var html = document.documentElement;
