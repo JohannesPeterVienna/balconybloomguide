@@ -31,7 +31,7 @@ function el(doc, tag) {
   return e;
 }
 
-function site({ cmp = 'hidden', stored, gpc = false, googleOff = false, cookies = [], blockStorage = false, cm = 2, us, gpp } = {}) {
+function site({ cmp = 'hidden', stored, gpc = false, googleOff = false, cookies = [], blockStorage = false, cm = 2, us, gpp, adsLoader = false } = {}) {
   const timers = []; let clock = 0;
   const updates = [], configs = [], scripts = [], cookieWrites = [], events = [];
   const store = new Map(stored === undefined ? [] : [[KEY, typeof stored === 'string' ? stored : JSON.stringify(stored)]]);
@@ -42,14 +42,18 @@ function site({ cmp = 'hidden', stored, gpc = false, googleOff = false, cookies 
   body.appendChild = (x) => { body.appended.push(x); return x; };
   const skip = el(doc, 'a.skip'); skip.parentNode = body;
   const button = el(doc, 'button[data-privacy-settings]');
+  const main = el(doc, 'main'); main.hasAttribute = (k) => k in main.attrs;
   Object.assign(doc, {
     documentElement: { getAttribute: (k) => (k === 'data-ads' ? 'no' : k === 'data-google' ? (googleOff ? 'off' : null) : null) },
     head: { appendChild: (s) => scripts.push(s.src) },
     body,
     createElement: (t) => el(doc, t),
-    querySelector: (sel) => (sel === '.skip' ? skip : null),
+    querySelector: (sel) => (sel === '.skip' ? skip : adsLoader && /adsbygoogle/.test(sel) ? { src: 'adsbygoogle.js' } : null),
+    docKeys: [],
+    addEventListener(ev, fn) { if (ev === 'keydown') doc.docKeys.push(fn); },
+    removeEventListener(ev, fn) { if (ev === 'keydown') doc.docKeys = doc.docKeys.filter((f) => f !== fn); },
     querySelectorAll: (sel) => (sel === '[data-privacy-settings]' ? [button] : []),
-    getElementById: () => null
+    getElementById: (id) => (id === 'main' ? main : null)
   });
   Object.defineProperty(doc, 'cookie', {
     get() { return jar.join('; '); },
@@ -113,7 +117,7 @@ function site({ cmp = 'hidden', stored, gpc = false, googleOff = false, cookies 
   const noteOpen = () => !!note() && !note().hidden;
   const pick = (v) => note().handlers.click({ target: { closest: () => ({ getAttribute: () => v }) } });
   const gaScripts = () => scripts.filter((s) => GA_SRC.test(s)).length;
-  return { window, store, updates, configs, scripts, cookieWrites, events, advance, ready, tcf, note, live, noteOpen, pick, gaScripts, button, doc,
+  return { main, escapeDoc: (target) => { const ev = { key: 'Escape', defaultPrevented: false, target }; for (const f of doc.docKeys.slice()) f(ev); }, window, store, updates, configs, scripts, cookieWrites, events, advance, ready, tcf, note, live, noteOpen, pick, gaScripts, button, doc,
     jar: () => jar.slice(), set cm(v) { cm = v; } };
 }
 const adKeys = (u) => Object.keys(u).filter((k) => k !== 'analytics_storage');
@@ -479,4 +483,62 @@ test('print: window hidden and its bottom padding removed', () => {
   const print = css.slice(css.indexOf('@media print'));
   assert.match(print, /\.almanote,[^{]*\{ display: none !important; \}/);
   assert.match(print, /body \{ padding-bottom: 0 !important; \}/);
+});
+
+// ---------- final round E2–E7 ----------
+test('E2: content page, silent CMP: window opened via the button offers the Google link; with the AdSense loader present nothing is loaded', () => {
+  const s = site({ cmp: 'hidden', adsLoader: true });
+  s.advance(3000);
+  assert.equal(s.note().querySelector('[data-note-google]').hidden, true, 'not in the window that appeared by itself');
+  s.pick('close');
+  s.button.handlers.click();
+  assert.equal(s.note().querySelector('[data-note-google]').hidden, false);
+  s.pick('google'); s.ready();
+  assert.ok(s.events.includes('revocation'));
+  assert.equal(s.scripts.length, 0, 'CMP already there: nothing loaded');
+  for (const u of s.updates) for (const k of adKeys(u)) assert.equal(u[k], 'denied', 'never an ad consent');
+});
+
+test('E2: content page without the AdSense loader: only the consent script, after the googlefcPresent iframe', () => {
+  const s = site({ cmp: 'hidden' });
+  s.advance(3000); s.pick('close');
+  s.button.handlers.click(); s.pick('google');
+  assert.deepEqual(s.scripts, ['https://fundingchoicesmessages.google.com/i/pub-7811071715414905?ers=1']);
+  assert.equal(s.doc.body.appended.filter((x) => x.name === 'googlefcPresent').length, 1);
+});
+
+test('E3: Escape closes the open note without focus in it, but not when another element handles Escape', () => {
+  const s = site({ cmp: 'hidden' });
+  s.advance(3000);
+  s.escapeDoc({ closest: (sel) => (/details\[open\]/.test(sel) ? {} : null) });
+  assert.equal(s.noteOpen(), true, 'open menu keeps its Escape');
+  s.escapeDoc({ closest: () => null });
+  assert.equal(s.noteOpen(), false);
+  assert.equal(s.store.has(KEY), false);
+  assert.equal(s.doc.docKeys.length, 0, 'listener only while open');
+});
+
+test('E4: closing the automatic note with focus inside moves focus to the main content', () => {
+  const s = site({ cmp: 'hidden' });
+  s.advance(3000);
+  s.note().querySelector('#almanote-title').focus();
+  s.pick('close');
+  assert.ok(s.main.focused > 0);
+  assert.equal(s.main.attrs.tabindex, '-1');
+});
+
+test('E5: closed without a choice, the note never reopens by itself in the same page view', () => {
+  const s = site({ cmp: 'hidden' });
+  s.advance(3000); s.pick('close');
+  s.advance(60000);
+  assert.equal(s.noteOpen(), false);
+});
+
+test('E7: GPC deletes existing _ga cookies right at load, whatever was stored', () => {
+  for (const stored of [undefined, { v: 1, choice: 'granted', at: Date.now() - DAY }]) {
+    const s = site({ cmp: 'hidden', gpc: true, stored, cookies: ['_ga=GA1.1.1', '_ga_T00HRG2YVF=GS1'] });
+    assert.deepEqual(s.jar(), []);
+    const t = site({ cmp: 'none', googleOff: true, gpc: true, stored, cookies: ['_ga=GA1.1.1'] });
+    assert.deepEqual(t.jar(), []);
+  }
 });

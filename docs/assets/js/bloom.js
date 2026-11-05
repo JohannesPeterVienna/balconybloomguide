@@ -294,7 +294,10 @@
     window.googlefc.callbackQueue.push(function () {
       try { openPrivacyMessage(before); } catch (e) { /* CMP not available */ }
     });
-    if (googleOff) { googleAsked = true; loadConsentScript(); } else loadAdScript();
+    if (googleOff) googleAsked = true;
+    // order as in Google's snippet: queue + callback (above) → iframe "googlefcPresent" → consent script.
+    // Content pages already carry the AdSense loader with the CMP: nothing is loaded then. Never adsbygoogle.js on click.
+    if (googleOff || !document.querySelector('script[src*="adsbygoogle.js"]')) loadConsentScript();
   }
 
   /* ---------- interim statistics window: the almanac note ---------- */
@@ -388,7 +391,7 @@
     now.hidden = !now.textContent;
     note.querySelector('[data-note-picks]').hidden = blocked;
     note.querySelector('[data-note-ok]').hidden = !blocked;
-    note.querySelector('[data-note-google]').hidden = stats.phase !== 'settings';
+    note.querySelector('[data-note-google]').hidden = !noteOpener;   // only in a window opened via “Privacy settings”
   }
   function noteRoom() {   // keeps the footer reachable while the note is open
     try {
@@ -402,19 +405,41 @@
       noteOpener = opener || null;
       fillNote();
       note.hidden = false;
+      watchEscape(true);
       noteRoom();
       if (!noteResize) { noteResize = true; window.addEventListener('resize', noteRoom); }
       if (noteOpener) note.querySelector('#almanote-title').focus({ preventScroll: true });   // asked for: focus moves in
       else announce('A question about visitor statistics is shown at the bottom of the page.');
     } catch (e) { /* no DOM: nothing to show */ }
   }
+  // Escape also closes the open note when focus is elsewhere – unless another open menu or dialog, or a
+  // form field, handles Escape itself. The listener exists only while the note is open.
+  function noteEscape(e) {
+    if (e.key !== 'Escape' || e.defaultPrevented || !note || note.hidden) return;
+    var t = e.target;
+    if (t && t.closest && t.closest('dialog[open], [role="dialog"]:not(#bbg-stats), [role="menu"], [role="listbox"], [aria-expanded="true"], details[open], select, textarea, input')) return;
+    closeNote(true);
+  }
+  function watchEscape(on) {
+    try {
+      if (on) document.addEventListener('keydown', noteEscape);
+      else document.removeEventListener('keydown', noteEscape);
+    } catch (e) { /* no DOM */ }
+  }
   function closeNote(returnFocus) {
     if (!note || note.hidden) return;
     var hadFocus = false;
     try { hadFocus = note.contains(document.activeElement); } catch (e) { hadFocus = false; }
     note.hidden = true;
+    watchEscape(false);
     noteRoom();
-    if ((returnFocus || hadFocus) && noteOpener && noteOpener.focus) { try { noteOpener.focus(); } catch (e) { /* ignore */ } }
+    try {
+      if ((returnFocus || hadFocus) && noteOpener && noteOpener.focus) noteOpener.focus();
+      else if (hadFocus) {   // no opener (window appeared by itself): focus goes to the main content
+        var main = document.getElementById('main');
+        if (main) { if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1'); main.focus({ preventScroll: true }); }
+      }
+    } catch (e) { /* ignore */ }
     noteOpener = null;
   }
   function chooseStats(choice) {
