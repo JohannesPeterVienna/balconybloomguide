@@ -42,6 +42,17 @@
     s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + CLIENT;
     document.head.appendChild(s);
   }
+  // Pages without Google code: on an explicit click only Google's consent script (Funding Choices) is loaded –
+  // never adsbygoogle.js, so no Auto Ads can appear on the imprint, privacy, contact or error page.
+  var consentScriptLoaded = false;
+  function loadConsentScript() {
+    if (consentScriptLoaded || document.querySelector('script[src*="fundingchoicesmessages.google.com"]')) return;
+    consentScriptLoaded = true;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://fundingchoicesmessages.google.com/i/pub-7811071715414905?ers=1';
+    document.head.appendChild(s);
+  }
   function fillSlots() {
     if (!adsOn) return;
     var wide = window.matchMedia('(min-width: 1200px)').matches;
@@ -86,7 +97,7 @@
     var cm = state.cmReady && C.tcfSignal(state.tc) !== 'no' ? consentModeValues() : null;
     // a U.S. opt-out reported later through GPP keeps everything denied for the rest of the page view
     var d = state.gppOptOut ? Object.assign({}, C.DENIED_ALL) : C.decide(state.tc, cm, state.us);
-    if (gpc) d.analytics_storage = 'denied';   // Global Privacy Control: no analytics
+    if (gpc || googleOff) d.analytics_storage = 'denied';   // GPC, or a page without analytics: no GA
     var ga = d.analytics_storage === 'granted';
     window[GA_OFF] = !ga;
     var key = JSON.stringify(d);
@@ -150,7 +161,7 @@
   // every TCF event: Google's CMP has priority over the window
   function statsSeeTc(tc) {
     var C = window.BBConsent;
-    if (!tc || stats.phase === 'settings') return;
+    if (!tc || (stats.phase === 'settings' && !googleAsked)) return;
     if (tc.gdprApplies === false || C.cmpDecided(tc)) statsForget();   // Google's answer replaces the window's
     if (C.cmpSpoke(tc) && stats.phase !== 'retired') {
       stats.phase = 'retired'; stats.pick = null;
@@ -250,17 +261,22 @@
       b.addEventListener('click', function () {
         // interim mode or a page without Google code: our own window to view, change or withdraw
         if (stats.phase === 'active' || stats.phase === 'settings') { openNote(b); return; }
-        // withdraw at once; the CMP reports the new decision through the listeners above
-        var before = { tc: state.tc, cmReady: state.cmReady };
-        state.tc = null; state.cmReady = false; apply();
-        window.googlefc = window.googlefc || {};
-        window.googlefc.callbackQueue = window.googlefc.callbackQueue || [];
-        window.googlefc.callbackQueue.push(function () {
-          try { openPrivacyMessage(before); } catch (e) { /* CMP not available */ }
-        });
-        loadAdScript();
+        openGoogleChoices();
       });
     });
+  }
+  // Google's consent message (EU) or U.S. opt-out dialog. Withdraws at once; the CMP reports the new
+  // decision through the listeners above.
+  var googleAsked = false;
+  function openGoogleChoices() {
+    var before = { tc: state.tc, cmReady: state.cmReady };
+    state.tc = null; state.cmReady = false; apply();
+    window.googlefc = window.googlefc || {};
+    window.googlefc.callbackQueue = window.googlefc.callbackQueue || [];
+    window.googlefc.callbackQueue.push(function () {
+      try { openPrivacyMessage(before); } catch (e) { /* CMP not available */ }
+    });
+    if (googleOff) { googleAsked = true; loadConsentScript(); } else loadAdScript();
   }
 
   /* ---------- interim statistics window: the almanac note ---------- */
@@ -287,12 +303,19 @@
       '<div class="almanote-picks" data-note-picks>' +
       '<button type="button" class="almanote-pick" data-note="granted">Allow</button>' +
       '<button type="button" class="almanote-pick" data-note="denied">Decline</button></div>' +
-      '<div class="almanote-picks almanote-picks--one" data-note-ok hidden><button type="button" class="almanote-pick" data-note="close">Close</button></div>';
+      '<div class="almanote-picks almanote-picks--one" data-note-ok hidden><button type="button" class="almanote-pick" data-note="close">Close</button></div>' +
+      '<p class="almanote-google" data-note-google hidden><button type="button" class="linklike" data-note="google">Open Google’s ad &amp; U.S. privacy choices</button></p>';
     el.addEventListener('click', function (e) {
       var t = e.target && e.target.closest ? e.target.closest('[data-note]') : null;
       if (!t) return;
       var what = t.getAttribute('data-note');
-      if (what === 'granted' || what === 'denied') chooseStats(what); else closeNote(true);   // × = no choice
+      if (what === 'granted' || what === 'denied') chooseStats(what);
+      else if (what === 'google') {   // explicit click only: load Google's consent script and open its message
+        var opener = noteOpener; closeNote(false); noteOpener = null;
+        openGoogleChoices();
+        if (opener && opener.focus) { try { opener.focus(); } catch (e2) { /* ignore */ } }
+      }
+      else closeNote(true);   // × = no choice
     });
     el.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') { e.preventDefault(); closeNote(true); }   // Escape = no choice, never consent
@@ -324,12 +347,13 @@
         'Saved in this browser for 12 months; change it any time under “Privacy settings”.' + link + '</p>';
       var line = rec ? 'Your current choice: ' + (rec.choice === 'granted' ? 'allowed' : 'declined') + ' on ' + noteDate(rec.at) + '.'
         : (noteOpener ? 'No choice saved in this browser yet.' : '');
-      if (stats.phase === 'settings') line += (line ? ' ' : '') + 'Nothing is measured on this page. Chose in Google’s consent message? Change it via “Privacy settings” on a guide page.';
+      if (stats.phase === 'settings') line += (line ? ' ' : '') + 'Nothing is measured on this page. To withdraw consent to ads or to opt out under U.S. state law, use the link below; it loads Google’s consent script only then.';
       now.textContent = line;
     }
     now.hidden = !now.textContent;
     note.querySelector('[data-note-picks]').hidden = blocked;
     note.querySelector('[data-note-ok]').hidden = !blocked;
+    note.querySelector('[data-note-google]').hidden = stats.phase !== 'settings';
   }
   function noteRoom() {   // keeps the footer reachable while the note is open
     try {

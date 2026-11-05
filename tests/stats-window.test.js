@@ -387,3 +387,40 @@ test('no gtag("event") call anywhere in the site scripts without the ga-disable 
     }
   }
 });
+
+test('pages without Google code: the Google choices link loads only the consent script, Google then takes priority, GA stays off', () => {
+  const s = site({ cmp: 'manual', googleOff: true, stored: { v: 1, choice: 'granted', at: Date.now() - DAY }, cm: 1 });
+  s.button.handlers.click();
+  assert.equal(s.note().querySelector('[data-note-google]').hidden, false);
+  assert.equal(s.scripts.length, 0, 'nothing from Google before the click');
+  s.pick('google');
+  assert.equal(s.noteOpen(), false);
+  assert.deepEqual(s.scripts, ['https://fundingchoicesmessages.google.com/i/pub-7811071715414905?ers=1']);
+  assert.equal(s.scripts.filter((x) => /adsbygoogle/.test(x)).length, 0);
+  s.ready();
+  assert.ok(s.events.includes('revocation'), 'Google consent message opened');
+  s.tcf({ gdprApplies: true, eventStatus: 'useractioncomplete', tcString: 'CQ', purpose: { consents: { 1: true } }, vendor: { consents: { 755: true } } });
+  assert.equal(s.store.has(KEY), false, 'Google decision replaces the window choice');
+  assert.equal(s.window[OFF], true, 'GA stays off on these pages');
+  assert.equal(s.gaScripts(), 0);
+  assert.equal(lastAnalytics(s), 'denied');
+  // the footer button now goes straight to Google, again without adsbygoogle.js
+  s.button.handlers.click(); s.ready();
+  assert.equal(s.scripts.length, 1);
+  assert.equal(s.events.filter((e) => e === 'revocation').length, 2);
+});
+
+test('pages without Google code, U.S. visitor: the link opens the U.S. opt-out dialog', () => {
+  const s = site({ cmp: 'manual', googleOff: true, us: 2 });
+  let dialog = 0;
+  s.window.googlefc.usstatesoptout.openConfirmationDialog = () => { dialog++; };
+  s.button.handlers.click(); s.pick('google'); s.ready();
+  assert.equal(dialog, 1);
+  assert.equal(s.window[OFF], true);
+});
+
+test('content pages: the Google choices link is not shown in the window', () => {
+  const s = site({ cmp: 'hidden' });
+  s.advance(3000);
+  assert.equal(s.note().querySelector('[data-note-google]').hidden, true);
+});
