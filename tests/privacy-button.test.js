@@ -55,8 +55,8 @@ function page(usStatus, withEnum, gpp, gdprApplies = false) {
     }
   };
   runQueue();
-  // a U.S. visitor outside the GDPR who has not opted out
-  tcfListener({ gdprApplies, eventStatus: 'tcloaded' }, true);
+  // Google's CMP has spoken (stored decision, non-empty TC string), so "Privacy settings" takes Google's way
+  tcfListener({ gdprApplies, eventStatus: 'tcloaded', tcString: 'CQ' }, true);
   return { calls, consentUpdates, window, click: () => clickHandler(), runQueue, usstatesoptout, last: () => consentUpdates[consentUpdates.length - 1] };
 }
 
@@ -65,7 +65,9 @@ test('U.S. state law applies: opens the opt-out dialog, not the EU message; opti
   assert.equal(p.last().analytics_storage, 'granted');
   p.click();
   assert.equal(p.last().ad_personalization, 'denied');            // withdrawn at once
-  assert.ok(p.calls.some((c) => c[0] === 'script' && /adsbygoogle\.js/.test(c[1])), 'ad script loaded lazily');
+  // no AdSense loader found: only Google's consent script is loaded on click, never adsbygoogle.js
+  assert.ok(p.calls.some((c) => c[0] === 'script' && /fundingchoicesmessages\.google\.com\/i\/pub-7811071715414905\?ers=1/.test(c[1])), 'consent script loaded lazily');
+  assert.ok(!p.calls.some((c) => c[0] === 'script' && /adsbygoogle\.js/.test(c[1])));
   p.runQueue();
   assert.deepEqual(p.calls.filter((c) => c[0] !== 'script'), [['usDialog']]);
   p.usstatesoptout.getInitialUsStatesOptOutStatus = () => 3;

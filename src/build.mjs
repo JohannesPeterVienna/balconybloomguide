@@ -18,11 +18,13 @@ const REVIEWED_ISO = '2026-10-31';
 const UPDATED = 'November 4, 2026';
 const UPDATED_ISO = '2026-11-04';
 const PUBLISHED_ISO = '2026-10-31';
-const V = '20261104d';
+const V = '20261105a';
 // Guides corrected on November 4 (rosemary hardiness aligned with the plant profile).
 const GUIDES_CHANGED = ['windy-balcony-plants', 'south-facing-balcony-plants', 'overwintering-balcony-plants'];
 // Pages that never load the AdSense script (legal and contact pages, 404).
 const NO_LOADER = ['/imprint/', '/privacy/', '/contact/'];
+// …and there no Google code at all: no ads, no analytics; “Privacy settings” opens the interim statistics window.
+const googleOff = (pg) => !!pg.noindex || NO_LOADER.includes(pg.path);
 
 export const GROUPS = [
   { key: 'sun', name: 'Sun & orientation', slugs: ['east-facing-balcony-plants', 'west-facing-balcony-plants', 'north-facing-balcony-plants', 'south-facing-balcony-plants'] },
@@ -87,7 +89,7 @@ function layout(pg) {
   const graph = [{ '@type': 'BreadcrumbList', itemListElement: pg.crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c[0], item: SITE + c[1] })) }];
   if (pg.schema) graph.push(...[].concat(pg.schema));
   const head = `<!doctype html>
-<html lang="en" data-ads="${pg.ads ? 'yes' : 'no'}">
+<html lang="en" data-ads="${pg.ads ? 'yes' : 'no'}"${googleOff(pg) ? ' data-google="off"' : ''}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -112,7 +114,7 @@ function layout(pg) {
 <link rel="preload" href="/assets/fonts/young-serif-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/css/bloom.css?v=${V}">
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});gtag('set','ads_data_redaction',true);gtag('set','url_passthrough',false);window['ga-disable-${GA}']=true;</script>
-${!pg.noindex && !NO_LOADER.includes(pg.path) ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${CLIENT}" crossorigin="anonymous"></script>\n` : ''}${ldjson({ '@context': 'https://schema.org', '@graph': graph })}
+${!googleOff(pg) ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${CLIENT}" crossorigin="anonymous"></script>\n` : ''}${ldjson({ '@context': 'https://schema.org', '@graph': graph })}
 <script src="/assets/js/consent.js?v=${V}" defer></script>
 ${(pg.scripts || []).map((s) => `<script src="/assets/js/${s}?v=${V}" defer></script>`).join('\n')}${pg.scripts && pg.scripts.length ? '\n' : ''}<script src="/assets/js/bloom.js?v=${V}" defer></script>
 </head>`;

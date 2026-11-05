@@ -1,5 +1,5 @@
 /*
- * Balcony Bloom Guide – consent decision (pure function, tested in tests/consent.test.js).
+ * Balcony Bloom Guide – consent decision and interim statistics rules (pure functions, tested in tests/privacy-button.test.js and tests/stats-window.test.js).
  * A purpose only becomes "granted" when Google's certified CMP (Privacy & messaging) says so:
  *  - GDPR applies (or is not stated as false): TCF purpose 1 + Google (vendor 755) consent, TCF data
  *    loaded, AND the CMP's Consent Mode value for that purpose is GRANTED (1).
@@ -87,7 +87,60 @@
     return true;   // a U.S. section applies (or applicableSections is missing) but none was parsed
   }
 
-  var api = { tcfSignal: tcfSignal, decide: decide, gppUsOptOut: gppUsOptOut, DENIED_ALL: DENIED_ALL };
+  /*
+   * Interim statistics window (since 5 Nov 2026) – the rules without DOM, tested in tests/stats-window.test.js.
+   * Google's consent message is published but reports displayStatus "hidden", so no TCF decision arrives.
+   * The page then asks itself – for Google Analytics only. These helpers say when Google's CMP has spoken
+   * and read the stored choice; bloom.js does the rest.
+   */
+  var STATS = { KEY: 'bbg-stats', VERSION: 1, WAIT_MS: 3000, MONTHS: 12 };
+  // a real decision: the visitor acted in Google's message, or Google loaded a stored decision (non-empty TC string)
+  function cmpDecided(tc) {
+    return !!tc && (tc.eventStatus === 'useractioncomplete' ||
+      (tc.eventStatus === 'tcloaded' && typeof tc.tcString === 'string' && tc.tcString !== ''));
+  }
+  // Google's own message is on screen; "cmpuishown" with displayStatus hidden/disabled does NOT count
+  function cmpShowing(tc) {
+    if (!tc) return false;
+    if (tc.displayStatus === 'visible') return true;
+    return tc.eventStatus === 'cmpuishown' && tc.displayStatus !== 'hidden' && tc.displayStatus !== 'disabled';
+  }
+  // from now on only Google's CMP (and the logic above) counts
+  function cmpSpoke(tc) { return !!tc && (tc.gdprApplies === false || cmpDecided(tc) || cmpShowing(tc)); }
+  // a clear "no" to analytics from Google (TCF purpose 1 / vendor 755 missing, or Consent Mode analytics DENIED = 2)
+  function googleSaysNo(tc, cmAnalytics) {
+    if (!tc) return false;
+    if (tc.gdprApplies === false) return cmAnalytics === 2;
+    if (!cmpDecided(tc)) return false;
+    var p1 = !!(tc.purpose && tc.purpose.consents && tc.purpose.consents[1]);
+    var g = !!(tc.vendor && tc.vendor.consents && tc.vendor.consents[GOOGLE]);
+    return !p1 || !g || cmAnalytics === 2;
+  }
+  // stored record → valid record or null (wrong version/choice, time stamp in the future, older than 12 months)
+  function statsRecord(raw, now) {
+    var rec = raw;
+    if (typeof raw === 'string') { try { rec = JSON.parse(raw); } catch (e) { return null; } }
+    if (!rec || typeof rec !== 'object' || rec.v !== STATS.VERSION) return null;
+    if (rec.choice !== 'granted' && rec.choice !== 'denied') return null;
+    if (typeof rec.at !== 'number' || !isFinite(rec.at) || rec.at > now) return null;
+    var until = new Date(rec.at); until.setMonth(until.getMonth() + STATS.MONTHS);
+    return now < until.getTime() ? { v: rec.v, choice: rec.choice, at: rec.at } : null;
+  }
+  // GA cookie names (_ga, _ga_<container>) in a document.cookie string
+  function gaCookieNames(jar) {
+    return String(jar || '').split(';').map(function (c) { return c.split('=')[0].trim(); })
+      .filter(function (n) { return /^_ga(_.+)?$/.test(n); });
+  }
+  // every domain attribute a cookie for this host can carry: host-only, host, .host and each parent domain
+  function cookieDomains(host) {
+    var parts = String(host || '').split('.').filter(Boolean), out = [''];
+    for (var i = 0; i < parts.length - 1; i++) { var d = parts.slice(i).join('.'); out.push(d, '.' + d); }
+    return out;
+  }
+
+  var api = { tcfSignal: tcfSignal, decide: decide, gppUsOptOut: gppUsOptOut, DENIED_ALL: DENIED_ALL,
+    STATS: STATS, cmpDecided: cmpDecided, cmpShowing: cmpShowing, cmpSpoke: cmpSpoke, googleSaysNo: googleSaysNo,
+    statsRecord: statsRecord, gaCookieNames: gaCookieNames, cookieDomains: cookieDomains };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BBConsent = api;
 })(this);

@@ -31,6 +31,9 @@ for (const u of sitemap) {
   if (noLoader && loaders) p('AdSense loader on a legal/contact page');
   if (!noLoader && loaders !== 1) p(`AdSense loader ${loaders}× instead of once`);
   if (loaders && (h.indexOf('adsbygoogle.js') < h.indexOf("gtag('consent','default'") || h.indexOf('adsbygoogle.js') > h.indexOf('</head>'))) p('AdSense loader not in head after the consent default');
+  // pages without Google code are marked for the interim statistics window; "Privacy settings" in every footer
+  if (noLoader !== h.includes('data-google="off"')) p('data-google="off" must be set exactly on pages without the AdSense loader');
+  if (!/<footer[\s\S]*data-privacy-settings>Privacy settings<\/button>/.test(h)) p('footer without Privacy settings');
   for (const m of h.matchAll(/href="(\/[^"]*)"/g)) if (!exists(m[1])) p('broken link ' + m[1]);
   const main = h.slice(h.indexOf('<main'), h.indexOf('</main>')).replace(/<svg[\s\S]*?<\/svg>/g, ' ').replace(/<(form|section class="tool")[\s\S]*?<\/(form|section)>/g, ' ');
   const words = main.replace(/<[^>]+>/g, ' ').split(/\s+/).filter((w) => /[a-z]/i.test(w)).length;
@@ -42,16 +45,17 @@ for (const f of ['ads.txt', 'robots.txt', 'CNAME', '404.html']) if (!fs.existsSy
 const p404 = fs.readFileSync(path.join(DOCS, '404.html'), 'utf8');
 if (!p404.includes('noindex')) problems.push('404 must be noindex');
 if (p404.includes('adsbygoogle.js')) problems.push('AdSense loader on the 404 page');
+if (!p404.includes('data-google="off"') || !p404.includes('data-privacy-settings')) problems.push('404 needs data-google="off" and Privacy settings');
 if (fs.readFileSync(path.join(DOCS, 'CNAME'), 'utf8') !== 'balconybloomguide.com') problems.push('CNAME must be exactly balconybloomguide.com without newline');
 if (fs.readFileSync(path.join(DOCS, 'ads.txt'), 'utf8') !== 'google.com, pub-7811071715414905, DIRECT, f08c47fec0942fa0\n') problems.push('ads.txt changed');
 // lastmod changes only for pages whose content changed: the guides, tools, imprint and contact page keep the
-// October 31 rebuild date; plant profiles, overviews, home, About and privacy carry November 4. The visible date must match.
-const CHANGED = /^\/(plants\/.*|guides\/|guides\/(windy-balcony-plants|south-facing-balcony-plants|overwintering-balcony-plants)\/|tools\/|about\/|privacy\/)?$/;
+// October 31 rebuild date; plant profiles, overviews, home and About carry November 4, the privacy policy November 5. The visible date must match.
+const CHANGED = /^\/(plants\/.*|guides\/|guides\/(windy-balcony-plants|south-facing-balcony-plants|overwintering-balcony-plants)\/|tools\/|about\/)?$/;
 for (const m of fs.readFileSync(path.join(DOCS, 'sitemap.xml'), 'utf8').matchAll(/<loc>https:\/\/balconybloomguide\.com([^<]*)<\/loc><lastmod>([^<]*)<\/lastmod>/g)) {
-  const want = CHANGED.test(m[1]) ? '2026-11-04' : '2026-10-31';
+  const want = m[1] === '/privacy/' ? '2026-11-05' : CHANGED.test(m[1]) ? '2026-11-04' : '2026-10-31';
   if (m[2] !== want) problems.push(`sitemap lastmod ${m[1]} ${m[2]} instead of ${want}`);
   const h = fs.readFileSync(path.join(DOCS, m[1], 'index.html'), 'utf8');
-  const shown = want === '2026-11-04' ? 'November 4, 2026' : 'October 31, 2026';
+  const shown = { '2026-11-05': 'November 5, 2026', '2026-11-04': 'November 4, 2026', '2026-10-31': 'October 31, 2026' }[want];
   const mod = (h.match(/"dateModified":"([^"]*)"/) || [])[1];
   if (mod && mod !== want) problems.push(`${m[1]}: dateModified ${mod} instead of ${want}`);
   const vis = (h.match(/<p class="reviewed">[^<]*?(\w+ \d+, 2026)/) || [])[1];
