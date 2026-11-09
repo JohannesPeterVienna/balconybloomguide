@@ -205,7 +205,7 @@ ${relatedCards(m.related)}
 </article><aside class="side" aria-label="Advertisement">${AD('side')}</aside></div>`;
   pages.push({ path: `/guides/${s}/`, kind: 'guide', ads: true, ...(GUIDES_CHANGED.includes(s) ? { modified: UPDATED_ISO } : {}), title: m.title, description: m.description, html, navCurrent: '/guides/',
     crumbs: [['Home', '/'], ['Guides', '/guides/'], [m.h1, `/guides/${s}/`]],
-    schema: [{ '@type': 'Article', headline: m.h1, description: m.description, datePublished: PUBLISHED_ISO, dateModified: GUIDES_CHANGED.includes(s) ? UPDATED_ISO : REVIEWED_ISO, inLanguage: 'en', mainEntityOfPage: `${SITE}/guides/${s}/`, publisher: { '@type': 'Organization', name: 'AdStern', url: SITE + '/about/' } }, faq].filter(Boolean) });
+    schema: [{ '@type': 'Article', headline: m.h1, description: m.description, datePublished: PUBLISHED_ISO, dateModified: GUIDES_CHANGED.includes(s) ? UPDATED_ISO : REVIEWED_ISO, inLanguage: 'en', mainEntityOfPage: `${SITE}/guides/${s}/`, publisher: { '@type': 'Organization', name: 'AdStern – Agentur für digitales Marketing', url: SITE + '/about/' } }, faq].filter(Boolean) });
 }
 
 // plant profiles
@@ -225,7 +225,7 @@ ${relatedCards(m.related)}
 </article><aside class="side" aria-label="Advertisement">${AD('side')}</aside></div>`;
   pages.push({ path: `/plants/${s}/`, kind: 'guide', ads: true, modified: UPDATED_ISO, title: m.title, description: m.description, html, navCurrent: '/plants/',
     crumbs: [['Home', '/'], ['Plant profiles', '/plants/'], [short, `/plants/${s}/`]],
-    schema: [{ '@type': 'Article', headline: m.h1, description: m.description, datePublished: UPDATED_ISO, dateModified: UPDATED_ISO, inLanguage: 'en', mainEntityOfPage: `${SITE}/plants/${s}/`, publisher: { '@type': 'Organization', name: 'AdStern', url: SITE + '/about/' } }, faq].filter(Boolean) });
+    schema: [{ '@type': 'Article', headline: m.h1, description: m.description, datePublished: UPDATED_ISO, dateModified: UPDATED_ISO, inLanguage: 'en', mainEntityOfPage: `${SITE}/plants/${s}/`, publisher: { '@type': 'Organization', name: 'AdStern – Agentur für digitales Marketing', url: SITE + '/about/' } }, faq].filter(Boolean) });
 }
 
 // tools

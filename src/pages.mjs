@@ -83,7 +83,7 @@ export const STATIC_PAGES = [
     crumbs: [['Home', '/'], ['Imprint', '/imprint/']],
     html: legal('Legal notice', 'Imprint', `<p>Information pursuant to § 5 Austrian E-Commerce Act (ECG) and § 25 Austrian Media Act (MedienG).</p>
 <h2 id="publisher">Publisher and media owner</h2>
-<p>AdStern<br>Seilerstätte 8<br>1010 Vienna<br>Austria</p>
+<p>AdStern – Agentur für digitales Marketing<br>Seilerstätte 8/8<br>1010 Vienna<br>Austria</p>
 <p>Email: <a href="mailto:office@adstern.com">office@adstern.com</a></p>
 <h2 id="business">Business details</h2>
 <ul><li>Line of business: advertising agency (Werbeagentur)</li>
@@ -104,7 +104,7 @@ export const STATIC_PAGES = [
     crumbs: [['Home', '/'], ['Privacy', '/privacy/']],
     html: legal('Privacy', 'Privacy policy', `<p>This policy explains which data is processed when you use balconybloomguide.com, for what purpose and on which legal basis, and what rights you have.</p>
 <h2 id="controller">Controller</h2>
-<p>AdStern, Seilerstätte 8, 1010 Vienna, Austria, <a href="mailto:office@adstern.com">office@adstern.com</a> (details in the <a href="/imprint/">imprint</a>).</p>
+<p>AdStern – Agentur für digitales Marketing, Seilerstätte 8/8, 1010 Vienna, Austria, <a href="mailto:office@adstern.com">office@adstern.com</a> (details in the <a href="/imprint/">imprint</a>).</p>
 <h2 id="hosting">Hosting</h2>
 <p>The website is a static site hosted on GitHub Pages, a service of GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, USA. When a page is loaded, your browser transmits technical data – IP address, requested address, date and time, browser type, referring page – to GitHub's servers, which use it to deliver the page and to protect the service and may keep it in log files for a limited period. Legal basis: our legitimate interest in a reliable and secure website (Art. 6(1)(f) GDPR). Transfers to the USA rely on the EU–U.S. Data Privacy Framework or standard contractual clauses. See the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener">GitHub General Privacy Statement</a>.</p>
 <h2 id="tools">Your balcony data in the tools</h2>
