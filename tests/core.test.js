@@ -82,3 +82,114 @@ test('consent: nothing granted without clear signals', () => {
   assert.equal(K.decide(outside, { ...cmAll, analyticsStoragePurposeConsentStatus: 3 }, 2).analytics_storage, 'granted');
   assert.equal(K.decide(outside, { ...cmAll, analyticsStoragePurposeConsentStatus: 0 }, 1).analytics_storage, 'denied');
 });
+
+// ---- planning logic and reference data added on November 18, 2026 ----
+const P = require('../docs/assets/js/plan.js');
+const D = require('../docs/assets/js/data.js');
+test('day-of-year arithmetic: hand-counted cases, wrap-around, invalid dates', () => {
+  assert.equal(P.doy('01/01'), 1);
+  assert.equal(P.doy('03/30'), 31 + 28 + 30);
+  assert.equal(P.doy('12/31'), 365);
+  assert.equal(P.doy('02/29'), P.doy('02/28'));
+  for (const bad of ['13/01', '02/30', '00/10', '4/0', 'x', '', null, '<b>', '4/31']) assert.equal(P.doy(bad), null, String(bad));
+  assert.equal(P.label(P.doy('03/30') + 14), 'Apr 13');
+  assert.equal(P.label(P.doy('01/05') - 14), 'Dec 22');             // back across New Year
+  assert.equal(P.daysBetween(P.doy('04/13'), P.doy('11/20')), 221);  // 17 + 31 + 30 + 31 + 31 + 30 + 31 + 20
+  assert.equal(P.daysBetween(P.doy('09/20'), P.doy('05/10')), 232);  // Southern Hemisphere: forward across New Year
+});
+test('sowing windows follow the CSU offsets (New York, median dates)', () => {
+  const ny = D.STATIONS.find((s) => s[1] === 'USW00094728');
+  assert.deepEqual(ny.slice(5, 11), ['03/14', '03/30', '04/09', '11/06', '11/20', '12/06']);   // as retrieved from NCEI
+  const crop = (k) => D.CROPS.find((c) => c[0] === k);
+  const tom = P.schedule(crop('tomato'), P.doy(ny[6]), P.doy(ny[9]), D.CLASSES);
+  assert.equal(tom.outText, 'Apr 13');                       // very tender: +14 days
+  assert.equal(tom.sowText, 'Feb 23 – Mar 9');               // 7 and 5 weeks earlier
+  assert.equal(tom.seasonDays, 221); assert.equal(tom.fit, 'fits');
+  const let_ = P.schedule(crop('lettuce'), P.doy(ny[6]), P.doy(ny[9]), D.CLASSES);
+  assert.equal(let_.outText, 'Mar 2 – Mar 16');              // hardy: 4 to 2 weeks before
+  assert.equal(let_.sowText, null);
+  assert.equal(P.schedule(crop('basil'), 100, 300, D.CLASSES), null);          // no frost class in the source
+  const anc = D.STATIONS.find((s) => s[0] === 'Anchorage, AK');
+  const sq = P.schedule(crop('winter-squash'), P.doy(anc[7]), P.doy(anc[8]), D.CLASSES);
+  assert.equal(sq.fit, 'tight');                             // May 29 → Sep 18 = 112 days for 100 days to harvest
+  const short = P.schedule(crop('potato'), P.doy('06/01'), P.doy('09/01'), D.CLASSES);
+  assert.equal(short.fit, 'short');
+  assert.equal(P.schedule(crop('tomato'), P.doy('05/01'), null, D.CLASSES).fit, null);
+});
+test('reference data is complete and consistent', () => {
+  assert.equal(D.STATIONS.length, 53);
+  for (const s of D.STATIONS) {
+    assert.match(s[1], /^USW\d{8}$/);
+    const dates = s.slice(5, 11);
+    if (dates.some((d) => d === null)) { assert.ok(dates.every((d) => d === null), s[0]); assert.equal(s[11], 0, s[0]); continue; }
+    for (const d of dates) assert.notEqual(P.doy(d), null, s[0] + ' ' + d);
+    // spring: early ≤ median ≤ late, measured from the early date; fall likewise
+    assert.ok(P.daysBetween(P.doy(s[5]), P.doy(s[6])) <= P.daysBetween(P.doy(s[5]), P.doy(s[7])), s[0]);
+    assert.ok(P.daysBetween(P.doy(s[8]), P.doy(s[9])) <= P.daysBetween(P.doy(s[8]), P.doy(s[10])), s[0]);
+  }
+  const keys = new Set();
+  for (const c of D.CROPS) {
+    assert.ok(!keys.has(c[0])); keys.add(c[0]);
+    assert.ok(c[2] === null || Object.hasOwn(D.CLASSES, c[2]), c[0]);
+    for (const k of c[6]) assert.ok(Object.hasOwn(D.CONTAINERS, k), c[0]);
+    if (c[5]) assert.ok(c[5][0] <= c[5][1]);
+    if (c[2] === null) assert.equal(c[3], null);
+  }
+  for (const r of D.PERENNIALS) assert.ok(r[1] >= 1 && r[1] <= r[2] && r[2] <= 13);
+});
+test('container weight is volume times wet weight per litre', () => {
+  const w = P.containerWeight([8, 10], 0.75);
+  assert.ok(Math.abs(w.kg[0] - 8 * 3.78541 * 0.75) < 1e-9);
+  assert.ok(Math.abs(w.lb[1] - 10 * 3.78541 * 0.75 * 2.20462) < 1e-9);
+  assert.ok(Math.abs(P.containerWeight([1, 3]).kg[1] - 3 * 3.78541 * 0.75) < 1e-9);    // default: standard mix as in calc.js
+  assert.equal(C.MIXES.potting.wet, 0.75); assert.equal(C.MIXES.lightweight.wet, 0.6);
+});
+test('floor load: average, share and the three steps', () => {
+  const m2 = 10 * 5 * 0.3048 * 0.3048, ref = 60 * P.PSF;
+  const r = P.areaLoad(125, m2, ref);
+  assert.ok(Math.abs(r.avgKgM2 - 26.91) < 0.01);
+  assert.ok(Math.abs(r.avgPsf - 5.51) < 0.01);
+  assert.equal(r.state, 'low');
+  assert.equal(P.areaLoad(ref * m2 * 0.5, m2, ref).state, 'high');     // exactly half counts as "more than half"
+  assert.equal(P.areaLoad(ref * m2, m2, ref).state, 'over');           // the whole figure counts as "over"
+  assert.equal(P.areaLoad(125, m2, null).state, 'none');
+  assert.equal(P.areaLoad(125, 0, ref), null);
+  assert.equal(P.areaLoad(NaN, m2, ref), null);
+  assert.ok(Math.abs(60 * P.PSF - 292.9) < 0.1);                        // 60 psf in kg/m²
+});
+test('winter check for pots applies the two-zone margin', () => {
+  assert.equal(P.potWinter(7, 5), 'out');
+  assert.equal(P.potWinter(6, 5), 'protect');
+  assert.equal(P.potWinter(5, 5), 'protect');
+  assert.equal(P.potWinter(4, 5), 'in');
+  assert.equal(P.potWinter(NaN, 5), null);
+  assert.equal(P.potWinter(14, 5), null);
+  assert.deepEqual(P.zoneFromMinF(-3), { zone: 6, half: 'b', lowF: -10, highF: 0 });
+  assert.equal(P.zoneFromMinF(-60).zone, 1); assert.equal(P.zoneFromMinF(55).zone, 12); assert.equal(P.zoneFromMinF(65).zone, 13);
+  assert.equal(P.zoneFromMinF(-7).half, 'a');
+});
+test('shared links: round trip, hostile input, number and list limits', () => {
+  const st = { city: 'New York, NY', deg: 90, p: ['Tomato & basil~round~40.6', 'x'], empty: '', none: null };
+  const enc = P.encodeState(st);
+  assert.ok(!/[<>"' ]/.test(enc));
+  assert.deepEqual(P.decodeState('#' + enc), { city: 'New York, NY', deg: '90', p: ['Tomato & basil~round~40.6', 'x'] });
+  const evil = P.decodeState('#__proto__=1&constructor=2&a=%3Cscript%3Ealert(1)%3C/script%3E&b=%E0%A4%A&9x=1&ok=1&' + 'k='.padEnd(700, 'y'));
+  assert.deepEqual(Object.keys(evil).sort(), ['a', 'constructor', 'ok']);   // broken escapes, bad keys and oversized parts are dropped
+  assert.equal(({}).polluted, undefined);
+  assert.equal(evil.a, '<script>alert(1)</script>');                        // stays text; every tool validates or escapes it
+  assert.equal(P.numIn(evil.a, 0, 10, 5), 5);
+  assert.equal(P.oneOf(evil.a, ['open', 'glass'], 'open'), 'open');
+  for (const bad of ['1e9', '0x10', ' ', '1;2', '--1', '9999999', 'NaN', 'Infinity', undefined, 12]) assert.equal(P.numIn(bad, 0, 100, -1), -1, String(bad));
+  assert.equal(P.numIn('7.5', 0, 100, -1), 7.5); assert.equal(P.numIn('101', 0, 100, -1), -1); assert.equal(P.numIn('-5', -66, 66, 0), -5);
+  assert.equal(P.cleanText('  a\u0000b\nc' + 'x'.repeat(80), 10), 'a b cxxxxx');
+  const many = P.decodeState(Array.from({ length: 60 }, (_, i) => 'p=' + i).join('&'));
+  assert.equal(many.p.length, 40);
+});
+test('CSV cells that start like a formula are defused', () => {
+  assert.equal(P.csvCell('=SUM(A1:A9)'), '"\'=SUM(A1:A9)"');
+  assert.equal(P.csvCell('+1'), '"\'+1"'); assert.equal(P.csvCell('-1'), '"\'-1"'); assert.equal(P.csvCell('@cmd'), '"\'@cmd"');
+  assert.equal(P.csvCell('\t=1'), '"\'\t=1"');
+  assert.equal(P.csvCell('He said "hi", twice'), '"He said ""hi"", twice"');
+  assert.equal(P.csvCell(12.5), '"12.5"'); assert.equal(P.csvCell(null), '""');
+  assert.equal(P.csv([['a', '=b'], ['c']]), '"a","\'=b"\r\n"c"\r\n');
+});

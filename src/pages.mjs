@@ -2,7 +2,7 @@
 const RIS = 'https://www.ris.bka.gv.at/GeltendeFassung.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10007517';
 const legal = (kicker, h1, inner, updated = 'October 31, 2026') => `<article><span class="kicker">${kicker}</span><h1>${h1}</h1>${inner}<p class="reviewed">Last updated: ${updated}</p></article>`;
 
-export function HOME({ GROUPS, GUIDEMETA, TOOLMETA, TOOLS, esc }) {
+export function HOME({ GROUPS, GUIDEMETA, TOOLMETA, TOOLS, esc, QUICK }) {
   const card = (s) => `<a class="card" href="/guides/${s}/"><span class="k">${esc(GUIDEMETA[s].kicker)}</span><h3>${esc(GUIDEMETA[s].h1)}</h3><p>${esc(GUIDEMETA[s].description)}</p></a>`;
   const sketch = `<figure><svg viewBox="0 0 640 260" role="img" aria-labelledby="home-fig-t"><title id="home-fig-t">Cross-section of a balcony: the slab above shades the back wall while the railing still gets sun</title>
 <rect class="s-paper" x="0" y="0" width="640" height="260"/>
@@ -26,27 +26,29 @@ export function HOME({ GROUPS, GUIDEMETA, TOOLMETA, TOOLS, esc }) {
     html: `<section style="max-width:76ch;margin:0 auto;text-align:center;padding-top:10px">
 <span class="kicker">The balcony almanac</span>
 <h1>How much sun does your railing really get?</h1>
-<p class="lede">Plant labels say “full sun” or “part shade”. A balcony has both, a few feet apart: the slab of the balcony above, the side walls and the building across the street decide which spot gets six hours and which gets two. Balcony Bloom Guide calculates it for your balcony – then helps with weight, wind and water.</p>
-<p class="row" style="justify-content:center"><a class="btn sun" href="/tools/sun-hours/">Calculate my sun hours</a><a class="btn ghost" href="/guides/">Browse the guides</a></p>
+<p class="lede">Plant labels say “full sun” or “part shade”. A balcony has both, a few feet apart. Pick your city and direction:</p>
 </section>
+${QUICK}
 ${sketch}
-<section class="band" aria-labelledby="band-h"><h2 id="band-h">Four questions for your balcony</h2><ol class="q">
+<section class="band" aria-labelledby="band-h"><h2 id="band-h">Five questions for your balcony</h2><ol class="q">
 <li><a href="/tools/sun-hours/">How many hours of direct sun</a> reach the railing, the middle and the back wall – in June and in October?</li>
 <li><a href="/tools/pot-weight/">How heavy are my pots</a> when the mix is wet – and what do I hand to the building manager?</li>
 <li><a href="/tools/wind-check/">How windy is it up here</a>, and which pots, fixings and plants cope?</li>
 <li><a href="/tools/watering-planner/">How often do I water</a> – and how big a reservoir do I need for a week away?</li>
+<li><a href="/tools/frost-dates/">When can tender plants go out</a> – by the freeze dates NOAA publishes for my city, and is the season long enough?</li>
 </ol></section>
 <section class="vorteile" aria-labelledby="vt"><h2 id="vt">What you get</h2><ul>
 <li><b>Sun hours for your spot</b><span>Railing, middle and back wall – calculated from your orientation, floor and the balcony above.</span></li>
-<li><b>Weight you can show</b><span>Wet pot weight per square foot, ready for the building manager.</span></li>
+<li><b>Weight you can show</b><span>Wet pot weight, the load under each pot and the average per square foot, as a printout or CSV for the building manager.</span></li>
+<li><b>Dates from the record</b><span>Sowing and planting-out dates counted from NOAA freeze dates, not from a generic calendar.</span></li>
 <li><b>Wind and watering, planned</b><span>Which pots and plants cope up here, and how much water a week away needs.</span></li>
-<li><b>Plants that fit</b><span>Profiles with sun hours, container size and hardiness – not just “full sun”.</span></li>
-<li><b>Sources you can check</b><span>Extension services, NOAA and RHS cited on every page.</span></li>
+<li><b>Plants that fit</b><span>Ten profiles and a reference table of 33 container crops with pot size, sun hours and frost class.</span></li>
+<li><b>Sources you can check</b><span>Extension services, NOAA, USDA and RHS named where their figures are used.</span></li>
 <li><b>Free, no sign-up</b><span>Everything runs in your browser; your balcony profile stays on your device.</span></li>
 </ul></section>
 ${GROUPS.map((g) => `<h2 id="${g.key}">${g.name}</h2><div class="cards">${g.slugs.map(card).join('')}</div>`).join('\n')}
 <section style="max-width:74ch"><h2 id="why">Why start from the balcony, not the plant</h2>
-<p>Most gardening advice is written for open ground. A balcony is a box hanging on a wall: the floor above cuts off the high summer sun, the side walls cut off the early and late sun, and the wind at the eighth floor is not the wind at street level. Pots hold a few gallons of mix that dry out in a day, and every gallon of wet mix weighs about six pounds.</p>
+<p>The slab of the balcony above, the side walls and the building across the street decide which spot gets six hours of sun and which gets two. Most gardening advice is written for open ground. A balcony is a box hanging on a wall: the floor above cuts off the high summer sun, the side walls cut off the early and late sun, and the wind at the eighth floor is not the wind at street level. Pots hold a few gallons of mix that dry out in a day, and every gallon of wet mix weighs about six pounds.</p>
 <p>So every guide on this site states which spot on the balcony it means, which numbers it relies on and where they come from. The tools work without an account; your balcony profile is stored only in your browser. Read <a href="/about/">how the calculations work and where their limits are</a>.</p></section>`
   };
 }
@@ -54,7 +56,7 @@ ${GROUPS.map((g) => `<h2 id="${g.key}">${g.name}</h2><div class="cards">${g.slug
 export const STATIC_PAGES = [
   {
     path: '/about/', title: 'About Balcony Bloom Guide – method, sources and limits',
-    description: 'Who publishes Balcony Bloom Guide, how the sun simulator and the weight, wind and watering tools calculate, which sources the guides rely on and what they cannot do.',
+    description: 'Who publishes Balcony Bloom Guide, how it is made with AI assistance, how the tools calculate, which sources the pages rely on and how errors get corrected.',
     crumbs: [['Home', '/'], ['About', '/about/']],
     html: legal('About &amp; method', 'About Balcony Bloom Guide', `<p class="lede">Balcony Bloom Guide is a gardening site for people who grow on balconies – usually in rented apartments, often several floors up, with a slab above and a building across the street. It answers questions with your balcony's numbers instead of general labels.</p>
 <h2 id="who">Who publishes the site</h2>
@@ -65,17 +67,25 @@ export const STATIC_PAGES = [
 <h2 id="weights">Weights, wind and water</h2>
 <ul><li><b>Pot weights</b> use the volume of the pot (minus 1 in or 2.5 cm of headspace) and typical wet weights of potting mixes after watering and draining – from about 0.6 kg per litre for a light peat-perlite mix to about 1.65 kg per litre for garden soil. Real mixes differ; weigh a filled bucket to calibrate. The site never says whether a balcony can carry a load.</li>
 <li><b>Wind exposure</b> is a transparent points score from six questions (floor, corner position, surroundings, recess, railing, prevailing wind). It is a rule of thumb, not a measurement.</li>
-<li><b>Watering</b> estimates water use from reference evaporation for the weather you choose, the sun hours, a wind factor and the leaf area of the plant, and compares it with the water a pot of that size can hold for the plant.</li></ul>
+<li><b>Watering</b> estimates water use from reference evaporation for the weather you choose, the sun hours, a wind factor and the leaf area of the plant, and compares it with the water a pot of that size can hold for the plant.</li>
+<li><b>Floor load</b> divides the weight of your pot list by the floor area you enter and, if you supply a live-load figure, shows the share the pots alone use. It never turns that into a statement about safety.</li>
+<li><b>Frost dates and sowing</b> take freeze dates from NOAA's 1991–2020 climate normals for 53 U.S. stations (or the dates you enter) and add the planting offsets of a Colorado State University Extension guide; container sizes come from University of Maryland Extension.</li></ul>
+<p>Each tool shows its steps next to the result, and the tables on the guide pages that are marked "computed for this page" are produced by the same code when the site is built, so a table and a tool cannot disagree.</p>
 <h2 id="sources">Sources</h2>
-<p>Horticultural advice follows established public sources such as the Royal Horticultural Society (<a href="https://www.rhs.org.uk/" rel="noopener">rhs.org.uk</a>), including its guidance on <a href="https://www.rhs.org.uk/garden-inspiration/garden-types/balconies-roof-gardens" rel="noopener">balconies and roof gardens</a>, U.S. university extension services such as <a href="https://extension.umn.edu/" rel="noopener">University of Minnesota Extension</a> and <a href="https://extension.psu.edu/" rel="noopener">Penn State Extension</a>, the <a href="https://planthardiness.ars.usda.gov/" rel="noopener">USDA Plant Hardiness Zone Map</a> and the <a href="https://www.aspca.org/pet-care/animal-poison-control/toxic-and-non-toxic-plants" rel="noopener">ASPCA list of toxic and non-toxic plants</a>. Each guide lists what it relies on.</p>
+<p>Horticultural advice follows established public sources such as the Royal Horticultural Society (<a href="https://www.rhs.org.uk/" rel="noopener">rhs.org.uk</a>), including its guidance on <a href="https://www.rhs.org.uk/garden-inspiration/garden-types/balconies-roof-gardens" rel="noopener">balconies and roof gardens</a>, U.S. university extension services such as <a href="https://extension.umn.edu/" rel="noopener">University of Minnesota Extension</a> and <a href="https://extension.psu.edu/" rel="noopener">Penn State Extension</a>, the <a href="https://planthardiness.ars.usda.gov/" rel="noopener">USDA Plant Hardiness Zone Map</a> and the <a href="https://www.aspca.org/pet-care/animal-poison-control/toxic-and-non-toxic-plants" rel="noopener">ASPCA list of toxic and non-toxic plants</a>. Each guide lists what it relies on. Data tables name the publication, its date and the day we read it: NOAA's <a href="https://www.ncei.noaa.gov/products/land-based-station/us-climate-normals" rel="noopener">U.S. Climate Normals</a> for freeze dates, <a href="https://extension.colostate.edu/resource/vegetable-planting-guide/" rel="noopener">Colorado State University Extension</a> for frost classes and <a href="https://extension.umd.edu/resource/types-containers-growing-vegetables" rel="noopener">University of Maryland Extension</a> for container sizes.</p>
+<p>Not every older guide meets that standard yet: several still name a source only by its organization rather than by the exact page. Where that is the case the source list links to the organization's home page instead of a specific publication.</p>
+<h2 id="made">How the site is made</h2>
+<p>The texts, tables and calculators were written and programmed for this site with the help of AI language models, on behalf of and under the direction of the publisher. There is no named author, no editorial team of horticulturists and no test garden behind the pages, and the site does not claim any: nothing here reports our own growing trials or measurements. What a page can offer instead is a calculation you can follow step by step and figures traced to the publication they come from.</p>
 <h2 id="checks">How the content is checked</h2>
-<p>Every guide was written for this site and checked in a separate fact-check pass before publication: plant hardiness and toxicity against the sources named on the page, every worked example recalculated with the same code the tools use, and every number compared across pages so that the site does not contradict itself. Each page shows the date of its last review; when a page is re-checked or corrected, that date changes.</p>
+<p>Every guide was written for this site and checked in a separate pass before publication: plant hardiness and toxicity against the sources named on the page, every worked example recalculated with the same code the tools use, and every number compared across pages so that the site does not contradict itself. The calculations are covered by automated tests that run before each release – sun position against known solstice values, pot volumes against closed formulas, the frost-date arithmetic against hand-counted cases – and a browser test opens every page at phone and desktop width. Each page shows the date of its last change.</p>
+<h2 id="corrections">Corrections</h2>
+<p>If a number looks wrong, write to the address on the <a href="/contact/">contact page</a> and name the page and the figure. Confirmed errors are corrected in the source data, so a fix reaches every page and tool that uses the figure, and the date at the bottom of the page changes.</p>
 <h2 id="limits">What the site cannot do</h2>
 <p>It does not replace a structural engineer, your lease or your building's rules. It cannot see your balcony: if a result contradicts what you observe – a spot that the simulator calls sunny but a tree shades every afternoon – trust your observation and enter the obstacle where you can.</p>
 <h2 id="privacy">Your data</h2>
-<p>Everything you enter in the tools stays in your browser (localStorage). There is no account and nothing is uploaded. Details on advertising and analytics are in the <a href="/privacy/">privacy policy</a>.</p>
+<p>Everything you enter in the tools stays in your browser (localStorage). There is no account and nothing is uploaded. A link made with "Copy link" carries the values of that one calculation in the address itself, so whoever receives the link can read them. Details on this, on advertising and on analytics are in the <a href="/privacy/">privacy policy</a>.</p>
 <h2 id="history">History</h2>
-<p>The site started in 2026 as a single page with a three-pot herb plan. It was rebuilt from scratch in October 2026 with the tools and guides you see now; the herb plan lives on, in a longer form, in the guide <a href="/guides/balcony-herb-garden-part-shade/">Balcony herb garden in part shade</a>.</p>`, 'November 4, 2026'), modified: '2026-11-04'
+<p>The site started in 2026 as a single page with a three-pot herb plan. It was rebuilt from scratch in October 2026 with the tools and guides you see now; the herb plan lives on, in a longer form, in the guide <a href="/guides/balcony-herb-garden-part-shade/">Balcony herb garden in part shade</a>. In November 2026 the tools gained calculation steps, examples, shareable links and CSV export; the Frost Date &amp; Sowing Planner and the crop and plant reference were added; and the general month-by-month calendar guide was withdrawn in favour of the planner, which counts from real frost dates.</p>`, 'November 18, 2026'), modified: '2026-11-18'
   },
   {
     path: '/imprint/', title: 'Imprint – Balcony Bloom Guide',
@@ -108,7 +118,8 @@ export const STATIC_PAGES = [
 <h2 id="hosting">Hosting</h2>
 <p>The website is a static site hosted on GitHub Pages, a service of GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, USA. When a page is loaded, your browser transmits technical data – IP address, requested address, date and time, browser type, referring page – to GitHub's servers, which use it to deliver the page and to protect the service and may keep it in log files for a limited period. Legal basis: our legitimate interest in a reliable and secure website (Art. 6(1)(f) GDPR). Transfers to the USA rely on the EU–U.S. Data Privacy Framework or standard contractual clauses. See the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener">GitHub General Privacy Statement</a>.</p>
 <h2 id="tools">Your balcony data in the tools</h2>
-<p>Inputs in the Sun &amp; Shade Simulator, Pot Weight Planner, Wind Exposure Check and Watering Planner – location, balcony size, pot list – are processed only in your browser. The tools keep your inputs automatically in your browser's local storage on your device, so they are still there on your next visit; “Save as my balcony” additionally stores the calculated sun hours and wind class so that guide pages and the watering planner can use them. They are never sent to us or to third parties. You can delete them by clearing this site's data in your browser settings.</p>
+<p>Inputs in the Sun &amp; Shade Simulator, Pot Weight Planner, Wind Exposure Check, Watering Planner, Frost Date &amp; Sowing Planner and the filters of the crop and plant reference – location, balcony size, pot list, frost dates, hardiness zone – are processed only in your browser. The tools keep your inputs automatically in your browser's local storage on your device, so they are still there on your next visit; “Save as my balcony” additionally stores the calculated sun hours and wind class so that guide pages and the watering planner can use them. They are never sent to us or to third parties. You can delete them by clearing this site's data in your browser settings. The frost planner and the reference filters store nothing.</p>
+<p><b>Links, text copies and files you create.</b> "Copy link" puts an address on your clipboard that contains the values of that one calculation after the # sign – for example the city or the coordinates you entered, balcony sizes or a pot list with its names. Browsers do not send this part of an address to our hosting provider. When such a link is opened, the tool reads the values in the browser and removes them from the address bar as soon as it starts; until then they are part of the page address, which scripts running on the page – including Google's advertising script on pages that load it – can technically read. Anyone you give the link to can read the values, so do not put anything into a pot name that you would not share. "Copy result as text", "Download CSV" and printing happen in your browser; nothing is uploaded.</p>
 <h2 id="ads">Advertising with Google AdSense</h2>
 <p>This site shows advertising provided by Google AdSense, a service of Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Ireland, and for users outside the EEA, UK and Switzerland Google LLC, 1600 Amphitheatre Parkway, Mountain View, CA 94043, USA. AdSense uses cookies and similar technologies to display ads, limit how often an ad is shown, measure ad performance and prevent fraud.</p>
 <p>Guide, plant profile, tool and overview pages (the home page, the guide, tool and plant overviews and About) can show advertising. The AdSense script, together with Google's consent message, is loaded on these pages; Google places ads automatically, so the number and position of ads can vary from page to page. The imprint, this privacy policy and the contact page do not load the AdSense script and show no ads; Google's consent script is loaded there only if you explicitly click “Open Google’s ad &amp; U.S. privacy choices” (see the <a href="#interim-statistics">interim statistics window</a>).</p>
@@ -133,7 +144,7 @@ export const STATIC_PAGES = [
 <h2 id="us">Notice for U.S. residents</h2>
 <p>Some U.S. state privacy laws, such as the California Consumer Privacy Act as amended by the CPRA, treat advertising cookies used for cross-context behavioral advertising as “selling” or “sharing” personal information. Where these laws apply, Google's consent platform shows a “Do Not Sell or Share My Personal Information” option on this site, which you can reopen via “Privacy settings”. We do not sell personal information in any other way and do not knowingly collect personal information from children under 16.</p>
 <h2 id="changes">Changes</h2>
-<p>We update this policy when the services used on the site change; the date below shows the current version.</p>`, 'November 5, 2026'), modified: '2026-11-05'
+<p>We update this policy when the services used on the site change; the date below shows the current version.</p>`, 'November 18, 2026'), modified: '2026-11-18'
   },
   {
     path: '/contact/', title: 'Contact – Balcony Bloom Guide',

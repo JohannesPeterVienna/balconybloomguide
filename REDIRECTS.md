@@ -12,6 +12,7 @@ Each old file below exists in `docs/` as a noindex page with `meta refresh` and 
 | /contact.html | /contact/ |
 | /pot-planner.html | /tools/pot-weight/ (Pot Weight Planner) |
 | /sun-diary.html | /tools/sun-hours/ (Sun & Shade Simulator) |
+| /guides/balcony-calendar/ | /tools/frost-dates/ (Frost Date & Sowing Planner) – generic month-by-month guide withdrawn 18.11.2026 |
 
 The old herb plan content now lives in /guides/balcony-herb-garden-part-shade/.
 

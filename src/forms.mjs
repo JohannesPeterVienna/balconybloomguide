@@ -6,6 +6,7 @@ export const FORMS = {
   'sun-hours': `<section class="tool" data-tool="sun" aria-labelledby="tool-h">
 <h2 id="tool-h" style="margin-top:0">Your balcony</h2>
 ${unitSeg('sun-units', 'ft', 'm', 'Units')}
+<div class="examples noprint" id="sun-examples"></div>
 <form id="sun-form" novalidate>
 <fieldset><legend>Where and which way</legend><div class="fields">
 <div><label for="sun-city">Location</label><select id="sun-city" name="city"></select></div>
@@ -44,6 +45,7 @@ ${unitSeg('sun-units', 'ft', 'm', 'Units')}
   'pot-weight': `<section class="tool" data-tool="pots" aria-labelledby="tool-h">
 <h2 id="tool-h" style="margin-top:0">Add your pots</h2>
 ${unitSeg('pot-units', 'in', 'cm', 'Units')}
+<div class="examples noprint" id="pot-examples"></div>
 <form id="pot-form" novalidate>
 <div class="fields">
 <div><label for="pot-name">Name <span class="hint">optional</span></label><input id="pot-name" name="name" type="text" maxlength="40" placeholder="e.g. Tomato pot"></div>
@@ -61,11 +63,24 @@ ${unitSeg('pot-units', 'in', 'cm', 'Units')}
 </div>
 <div class="row" style="margin-top:14px"><button class="btn" type="submit">Add to list</button><span id="pot-msg" class="small" role="alert"></span></div>
 </form>
+<form id="area-form" novalidate>
+<fieldset style="margin-top:1.2em"><legend>Balcony floor and load figure (optional)</legend>
+<div class="fields">
+<div><label for="area-bw">Length along the facade <span class="hint"><span class="u-big">ft</span></span></label><input id="area-bw" name="bw" type="number" inputmode="decimal" step="0.1" min="0"></div>
+<div><label for="area-bd">Depth <span class="hint">facade to railing, <span class="u-big">ft</span></span></label><input id="area-bd" name="bd" type="number" inputmode="decimal" step="0.1" min="0"></div>
+<div style="grid-column:1/-1"><label for="area-ref">Live-load figure to compare with <span class="hint">from your building's documents, or a code table as an example</span></label><select id="area-ref" name="ref"><option value="none">None – only show the average</option><option value="custom">My building's figure (enter it)</option></select></div>
+</div>
+<div class="fields" id="area-custom" hidden style="margin-top:12px">
+<div><label for="area-refv">Figure</label><input id="area-refv" name="refv" type="number" inputmode="decimal" step="0.1" min="0"></div>
+<div><label for="area-refu">Unit</label><select id="area-refu" name="refu"><option value="psf">psf (lb per sq ft)</option><option value="kn">kN/m²</option><option value="kg">kg/m²</option></select></div>
+</div></fieldset>
+</form>
 <div id="pot-results" class="results" aria-live="polite"></div>
 </section>`,
 
   'wind-check': `<section class="tool" data-tool="wind" aria-labelledby="tool-h">
 <h2 id="tool-h" style="margin-top:0">Six questions about your balcony</h2>
+<div class="examples noprint" id="wind-examples"></div>
 <form id="wind-form" novalidate><div class="fields">
 <div><label for="w-floor">Floor <span class="hint">street level = 1</span></label><input id="w-floor" name="floor" type="number" inputmode="numeric" min="1" step="1" value="6"></div>
 <div><label for="w-pos">Position on the building</label><select id="w-pos" name="position"><option value="middle">Middle of the facade</option><option value="end">Near the end of the building</option><option value="corner">On a corner (open on two sides)</option></select></div>
@@ -80,6 +95,7 @@ ${unitSeg('pot-units', 'in', 'cm', 'Units')}
   'watering-planner': `<section class="tool" data-tool="water" aria-labelledby="tool-h">
 <h2 id="tool-h" style="margin-top:0">Pot, place and weather</h2>
 ${unitSeg('water-units', 'in', 'cm', 'Units')}
+<div class="examples noprint" id="water-examples"></div>
 <p id="water-profile" class="small"></p>
 <p id="water-import" class="small" hidden>You have <span></span> pot(s) in the Pot Weight Planner. <button type="button" class="linklike">Use my pot list</button></p>
 <form id="water-form" novalidate><div class="fields">
@@ -93,5 +109,52 @@ ${unitSeg('water-units', 'in', 'cm', 'Units')}
 <div><label for="wa-days">Days away <span class="hint">0 = not travelling</span></label><input id="wa-days" name="days" type="number" inputmode="numeric" min="0" max="30" step="1" value="0"></div>
 </div></form>
 <div id="water-results" class="results" aria-live="polite"></div>
+</section>`,
+
+  'frost-dates': `<section class="tool" data-tool="frost" aria-labelledby="tool-h">
+<h2 id="tool-h" style="margin-top:0">Your frost dates</h2>
+<div class="examples noprint" id="frost-examples"></div>
+<form id="frost-form" novalidate>
+<div class="fields wide">
+<div><label for="fr-place">Place <span class="hint">53 U.S. stations, NOAA normals 1991–2020</span></label><select id="fr-place" name="place"></select></div>
+<div><label for="fr-risk">Which dates to plan with</label><select id="fr-risk" name="risk"><option value="median">Median (half of the years freeze later)</option><option value="cautious">Cautious (1 year in 10 freezes later)</option></select></div>
+<div><label for="fr-mix">Potting mix for the weights</label><select id="fr-mix" name="mix"><option value="potting">Standard potting mix (0.75 kg/L wet)</option><option value="lightweight">Lightweight mix (0.6 kg/L wet)</option></select></div>
+</div>
+<div class="fields" id="frost-custom" hidden style="margin-top:12px">
+<div><label for="fr-lfm">Last spring frost: month</label><select id="fr-lfm" name="lfm"></select></div>
+<div><label for="fr-lfd">Day</label><input id="fr-lfd" name="lfd" type="number" inputmode="numeric" min="1" max="31" step="1" value="15"></div>
+<div><label for="fr-ffm">First fall frost: month</label><select id="fr-ffm" name="ffm"></select></div>
+<div><label for="fr-ffd">Day <span class="hint">empty = no fall frost date</span></label><input id="fr-ffd" name="ffd" type="number" inputmode="numeric" min="1" max="31" step="1" value="15"></div>
+</div>
+</form>
+<div id="frost-results" class="results" aria-live="polite"></div>
+</section>`,
+
+  'reference': `<section class="tool" data-tool="ref" aria-labelledby="tool-h">
+<h2 id="tool-h" style="margin-top:0">Filter the tables</h2>
+<form id="ref-form" novalidate>
+<div class="fields wide">
+<div><label for="ref-q">Search <span class="hint">crop name or any word in the row</span></label><input id="ref-q" name="q" type="text" maxlength="40" autocomplete="off"></div>
+<div><label for="ref-hours">Direct sun at my spot <span class="hint">hours per day, from the simulator</span></label><input id="ref-hours" name="hours" type="number" inputmode="decimal" min="0" max="16" step="0.1"></div>
+<div><label for="ref-season">Season group</label><select id="ref-season" name="season"><option value="">All</option><option value="cool">Cool-season crops</option><option value="warm">Warm-season crops</option><option value="none">No frost class in the source</option></select></div>
+<div><label for="ref-size">Container size group</label><select id="ref-size" name="size"><option value="">All</option><option value="S">Small (1–3 gal)</option><option value="M">Medium (4–6 gal)</option><option value="L">Large (8–10 gal)</option></select></div>
+<div><label for="ref-zone">My USDA zone <span class="hint">for the winter table</span></label><select id="ref-zone" name="zone"><option value="">Not set</option></select></div>
+</div>
+<div class="row noprint" style="margin-top:14px"><button type="reset" class="btn ghost">Reset filters</button><button type="button" class="btn ghost" id="ref-link">Copy link to this view</button><button type="button" class="btn ghost" id="ref-csv">Download visible rows (CSV)</button><span id="ref-status" class="small" role="status"></span></div>
+</form>
+<p id="ref-count" class="small" role="status" style="margin:.8em 0 0"></p>
+<p id="ref-empty" role="status" hidden>No row matches these filters. Lower the sun hours or reset the filters.</p>
+</section>`,
+
+  'quick': `<section class="tool quick" data-tool="quick" aria-labelledby="quick-h">
+<h2 id="quick-h" style="margin-top:0">Direct sun on your balcony this month</h2>
+<form id="quick-form" novalidate>
+<div class="fields">
+<div><label for="q-city">Nearest city</label><select id="q-city" name="city"></select></div>
+<div><label for="q-facing">Balcony faces</label><select id="q-facing" name="facing"></select></div>
+<div><label class="check"><input type="checkbox" name="above" checked> A balcony or roof above mine</label></div>
+</div>
+</form>
+<div id="quick-results" class="results" aria-live="polite"></div>
 </section>`
 };

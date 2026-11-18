@@ -39,7 +39,10 @@ for (const u of sitemap) {
   const words = main.replace(/<[^>]+>/g, ' ').split(/\s+/).filter((w) => /[a-z]/i.test(w)).length;
   if (/^\/(guides|tools|plants)\/.+/.test(u) && words < 900) p(`only ${words} words`);
   if (/^\/(tools|plants)\/$/.test(u) && words < 700) p(`index page only ${words} words`);
-  if (/https?:\/\/(?!balconybloomguide\.com)[^"]*"/.test(main) && /href="https?:\/\/(?!www\.rhs\.org\.uk|gml\.noaa\.gov|www\.almanac\.com|planthardiness\.ars\.usda\.gov|extension\.umn\.edu|extension\.psu\.edu|www\.aspca\.org|www\.ris\.bka\.gv\.at|docs\.github\.com|adssettings\.google\.com|www\.aboutads\.info|www\.youronlinechoices\.eu|policies\.google\.com|myaccount\.google\.com|www\.dsb\.gv\.at|www\.missouribotanicalgarden\.org|hgic\.clemson\.edu|extension\.illinois\.edu|hort\.extension\.wisc\.edu)/.test(main)) p('external link outside the approved list');
+  if (/https?:\/\/(?!balconybloomguide\.com)[^"]*"/.test(main) && /href="https?:\/\/(?!www\.rhs\.org\.uk|gml\.noaa\.gov|www\.almanac\.com|planthardiness\.ars\.usda\.gov|extension\.umn\.edu|extension\.psu\.edu|www\.aspca\.org|www\.ris\.bka\.gv\.at|docs\.github\.com|adssettings\.google\.com|www\.aboutads\.info|www\.youronlinechoices\.eu|policies\.google\.com|myaccount\.google\.com|www\.dsb\.gv\.at|www\.missouribotanicalgarden\.org|hgic\.clemson\.edu|extension\.illinois\.edu|hort\.extension\.wisc\.edu|www\.ncei\.noaa\.gov|extension\.colostate\.edu|extension\.umd\.edu|app\.leg\.wa\.gov)/.test(main)) p('external link outside the approved list');
+  // tool links with preset values: the address before # must exist, and the values must be plain key=value pairs
+  for (const m of h.matchAll(/href="(\/[^"#]*)#([^"]*=[^"]*)"/g)) if (!/^[A-Za-z0-9_.~%&=;+-]*$/.test(m[2].replace(/&amp;/g, '&'))) p('preset link with unexpected characters ' + m[0]);
+  if (/^\/guides\/.+/.test(u) && !/class="trybox"[\s\S]*?href="\/(tools|plants)\//.test(h)) p('guide without a preset tool link');
 }
 for (const f of ['ads.txt', 'robots.txt', 'CNAME', '404.html']) if (!fs.existsSync(path.join(DOCS, f))) problems.push('missing ' + f);
 const p404 = fs.readFileSync(path.join(DOCS, '404.html'), 'utf8');
@@ -48,18 +51,27 @@ if (p404.includes('adsbygoogle.js')) problems.push('AdSense loader on the 404 pa
 if (!p404.includes('data-google="off"') || !p404.includes('data-privacy-settings')) problems.push('404 needs data-google="off" and Privacy settings');
 if (fs.readFileSync(path.join(DOCS, 'CNAME'), 'utf8') !== 'balconybloomguide.com') problems.push('CNAME must be exactly balconybloomguide.com without newline');
 if (fs.readFileSync(path.join(DOCS, 'ads.txt'), 'utf8') !== 'google.com, pub-7811071715414905, DIRECT, f08c47fec0942fa0\n') problems.push('ads.txt changed');
-// lastmod changes only for pages whose content changed: the guides, tools, imprint and contact page keep the
-// October 31 rebuild date; plant profiles, overviews, home and About carry November 4, the privacy policy November 5. The visible date must match.
-const CHANGED = /^\/(plants\/.*|guides\/|guides\/(windy-balcony-plants|south-facing-balcony-plants|overwintering-balcony-plants)\/|tools\/|about\/)?$/;
+// lastmod changes only for pages whose content changed: imprint and contact keep the October 31 rebuild date, the ten
+// plant profiles November 4; everything else changed on November 18 (tools extended, frost planner and reference added,
+// every guide with a computed table or preset tool link, home, About, privacy). The visible date must match.
+const PROFILE = /^\/plants\/(?!reference\/)[a-z-]+\/$/;
+const UNCHANGED = /^\/(imprint|contact)\/$/;
 for (const m of fs.readFileSync(path.join(DOCS, 'sitemap.xml'), 'utf8').matchAll(/<loc>https:\/\/balconybloomguide\.com([^<]*)<\/loc><lastmod>([^<]*)<\/lastmod>/g)) {
-  const want = m[1] === '/privacy/' ? '2026-11-05' : CHANGED.test(m[1]) ? '2026-11-04' : '2026-10-31';
+  const want = UNCHANGED.test(m[1]) ? '2026-10-31' : PROFILE.test(m[1]) ? '2026-11-04' : '2026-11-18';
   if (m[2] !== want) problems.push(`sitemap lastmod ${m[1]} ${m[2]} instead of ${want}`);
   const h = fs.readFileSync(path.join(DOCS, m[1], 'index.html'), 'utf8');
-  const shown = { '2026-11-05': 'November 5, 2026', '2026-11-04': 'November 4, 2026', '2026-10-31': 'October 31, 2026' }[want];
+  const shown = { '2026-11-18': 'November 18, 2026', '2026-11-04': 'November 4, 2026', '2026-10-31': 'October 31, 2026' }[want];
   const mod = (h.match(/"dateModified":"([^"]*)"/) || [])[1];
   if (mod && mod !== want) problems.push(`${m[1]}: dateModified ${mod} instead of ${want}`);
   const vis = (h.match(/<p class="reviewed">[^<]*?(\w+ \d+, 2026)/) || [])[1];
   if (vis && vis !== shown) problems.push(`${m[1]}: visible date ${vis} instead of ${shown}`);
 }
+// the withdrawn calendar guide: redirect page with noindex, canonical and refresh; not in the sitemap, not linked
+if (sitemap.includes('/guides/balcony-calendar/')) problems.push('withdrawn calendar guide is still in the sitemap');
+const cal = fs.existsSync(path.join(DOCS, 'guides/balcony-calendar/index.html')) ? fs.readFileSync(path.join(DOCS, 'guides/balcony-calendar/index.html'), 'utf8') : '';
+if (!/noindex/.test(cal) || !cal.includes('<link rel="canonical" href="https://balconybloomguide.com/tools/frost-dates/">') || !cal.includes('http-equiv="refresh" content="0; url=/tools/frost-dates/"')) problems.push('calendar redirect page incomplete');
+for (const f of files) if (!f.includes('balcony-calendar') && fs.readFileSync(f, 'utf8').includes('/guides/balcony-calendar/')) problems.push('link to the withdrawn calendar guide in ' + path.relative(DOCS, f));
+// new pages are in the sitemap
+for (const u of ['/tools/frost-dates/', '/plants/reference/']) if (!sitemap.includes(u)) problems.push('missing in sitemap: ' + u);
 console.log(problems.length ? problems.join('\n') : `${sitemap.length} sitemap pages OK`);
 process.exit(problems.length ? 1 : 0);

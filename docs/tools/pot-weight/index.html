@@ -22,18 +22,20 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/assets/fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/young-serif-400.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/css/bloom.css?v=20261105c">
+<link rel="stylesheet" href="/assets/css/bloom.css?v=20261118a">
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});gtag('set','ads_data_redaction',true);gtag('set','url_passthrough',false);window['ga-disable-G-T00HRG2YVF']=true;</script>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7811071715414905" crossorigin="anonymous"></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://balconybloomguide.com/"},{"@type":"ListItem","position":2,"name":"Tools","item":"https://balconybloomguide.com/tools/"},{"@type":"ListItem","position":3,"name":"Pot Weight Planner","item":"https://balconybloomguide.com/tools/pot-weight/"}]},{"@type":"WebApplication","name":"How Heavy Is a Pot of Wet Soil? Pot Weight Planner","url":"https://balconybloomguide.com/tools/pot-weight/","applicationCategory":"UtilitiesApplication","operatingSystem":"Any (web browser)","inLanguage":"en","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is a dry pot much lighter?","acceptedAnswer":{"@type":"Answer","text":"Yes, but planning with dry weights understates the load."}},{"@type":"Question","name":"Why is my concrete pot estimate so heavy?","acceptedAnswer":{"@type":"Answer","text":"The planner assumes dense walls about 1 in (2.5 cm) thick. If yours is thinner or fiber cement, weigh it empty and use the real figure."}}]}]}</script>
-<script src="/assets/js/consent.js?v=20261105c" defer></script>
-<script src="/assets/js/calc.js?v=20261105c" defer></script>
-<script src="/assets/js/tools.js?v=20261105c" defer></script>
-<script src="/assets/js/bloom.js?v=20261105c" defer></script>
+<script src="/assets/js/consent.js?v=20261118a" defer></script>
+<script src="/assets/js/calc.js?v=20261118a" defer></script>
+<script src="/assets/js/data.js?v=20261118a" defer></script>
+<script src="/assets/js/plan.js?v=20261118a" defer></script>
+<script src="/assets/js/tools.js?v=20261118a" defer></script>
+<script src="/assets/js/bloom.js?v=20261118a" defer></script>
 </head>
 <body class="tool-page">
 <a class="skip" href="#main">Skip to content</a>
-<header class="mast"><div class="wrap"><a class="brand" href="/"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#1A1A1A"/><circle cx="27" cy="13" r="6" fill="#E2A022"/><path d="M8 31h24" stroke="#F7F6F2" stroke-width="2"/><path d="M11 31v-4h18v4" fill="#46588F"/><path d="M15 27c0-5 2-8 5-10M20 27c0-4 3-6 6-7M17 21c-2-1-4-1-6 0 2 2 4 2 6 0z" stroke="#9CC3A8" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg><b>Balcony Bloom Guide</b></a><p class="tag">The balcony almanac · sun, weight, wind and water for the balcony you actually have</p></div><hr class="rule2"><nav class="main" aria-label="Main"><div class="wrap"><ul><li><a href="/">Home</a></li><li><a href="/tools/sun-hours/">Sun simulator</a></li><li><a href="/tools/pot-weight/" aria-current="page">Pot weight</a></li><li><a href="/tools/wind-check/">Wind check</a></li><li><a href="/tools/watering-planner/">Watering</a></li><li><a href="/plants/">Plants</a></li><li><a href="/guides/">Guides</a></li><li><a href="/about/">About</a></li></ul></div></nav></header>
+<header class="mast"><div class="wrap"><a class="brand" href="/"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#1A1A1A"/><circle cx="27" cy="13" r="6" fill="#E2A022"/><path d="M8 31h24" stroke="#F7F6F2" stroke-width="2"/><path d="M11 31v-4h18v4" fill="#46588F"/><path d="M15 27c0-5 2-8 5-10M20 27c0-4 3-6 6-7M17 21c-2-1-4-1-6 0 2 2 4 2 6 0z" stroke="#9CC3A8" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg><b>Balcony Bloom Guide</b></a><p class="tag">The balcony almanac · sun, weight, wind and water for the balcony you actually have</p></div><hr class="rule2"><nav class="main" aria-label="Main"><div class="wrap"><ul><li><a href="/">Home</a></li><li><a href="/tools/sun-hours/">Sun simulator</a></li><li><a href="/tools/pot-weight/" aria-current="page">Pot weight</a></li><li><a href="/tools/wind-check/">Wind check</a></li><li><a href="/tools/watering-planner/">Watering</a></li><li><a href="/tools/frost-dates/">Frost dates</a></li><li><a href="/plants/">Plants</a></li><li><a href="/guides/">Guides</a></li><li><a href="/about/">About</a></li></ul></div></nav></header>
 <main id="main"><div class="wrap"><p class="crumbs"><a href="/">Home</a> › <a href="/tools/">Tools</a> › <span aria-current="page">Pot Weight Planner</span></p>
 <article>
 <span class="kicker">Weight &amp; safety</span>
@@ -42,6 +44,7 @@
 <section class="tool" data-tool="pots" aria-labelledby="tool-h">
 <h2 id="tool-h" style="margin-top:0">Add your pots</h2>
 <div class="row" style="margin-bottom:12px"><span class="lbl" id="pot-units-l">Units</span><div class="seg" id="pot-units" role="group" aria-labelledby="pot-units-l"><button type="button" data-v="in" aria-pressed="true">in</button><button type="button" data-v="cm" aria-pressed="false">cm</button></div></div>
+<div class="examples noprint" id="pot-examples"></div>
 <form id="pot-form" novalidate>
 <div class="fields">
 <div><label for="pot-name">Name <span class="hint">optional</span></label><input id="pot-name" name="name" type="text" maxlength="40" placeholder="e.g. Tomato pot"></div>
@@ -58,6 +61,18 @@
 <div><label for="pot-count">How many</label><input id="pot-count" name="count" type="number" inputmode="numeric" step="1" min="1" value="1"></div>
 </div>
 <div class="row" style="margin-top:14px"><button class="btn" type="submit">Add to list</button><span id="pot-msg" class="small" role="alert"></span></div>
+</form>
+<form id="area-form" novalidate>
+<fieldset style="margin-top:1.2em"><legend>Balcony floor and load figure (optional)</legend>
+<div class="fields">
+<div><label for="area-bw">Length along the facade <span class="hint"><span class="u-big">ft</span></span></label><input id="area-bw" name="bw" type="number" inputmode="decimal" step="0.1" min="0"></div>
+<div><label for="area-bd">Depth <span class="hint">facade to railing, <span class="u-big">ft</span></span></label><input id="area-bd" name="bd" type="number" inputmode="decimal" step="0.1" min="0"></div>
+<div style="grid-column:1/-1"><label for="area-ref">Live-load figure to compare with <span class="hint">from your building's documents, or a code table as an example</span></label><select id="area-ref" name="ref"><option value="none">None – only show the average</option><option value="custom">My building's figure (enter it)</option></select></div>
+</div>
+<div class="fields" id="area-custom" hidden style="margin-top:12px">
+<div><label for="area-refv">Figure</label><input id="area-refv" name="refv" type="number" inputmode="decimal" step="0.1" min="0"></div>
+<div><label for="area-refu">Unit</label><select id="area-refu" name="refu"><option value="psf">psf (lb per sq ft)</option><option value="kn">kN/m²</option><option value="kg">kg/m²</option></select></div>
+</div></fieldset>
 </form>
 <div id="pot-results" class="results" aria-live="polite"></div>
 </section>
@@ -76,7 +91,8 @@
 <p><b>Fill level.</b> The planner leaves 1 in (2.5 cm) free below the rim for watering and follows the taper down to that line, so the mix volume is a little less than the pot volume.</p>
 <p><b>Wet mix.</b> The mix volume is multiplied by a typical wet weight per liter: lightweight peat or coir mix with perlite 0.6 kg (about 5.0 lb per gallon), standard potting mix 0.75 kg (6.3 lb per gallon), compost-rich or loam-based mix 0.85 kg (7.1 lb per gallon), gritty cactus mix 1.05 kg (8.8 lb per gallon), and garden soil 1.65 kg (13.8 lb per gallon). Real mixes vary by about 20 % either way.</p>
 <p><b>The pot.</b> If you do not enter the empty weight, the planner estimates it from the wall and base area times a typical wall thickness and the density of the material, for example about 1/2 in (1.2 cm) of terracotta or 1 in (2.5 cm) of concrete.</p>
-<p><b>Total.</b> Wet mix plus pot plus plant, multiplied by the number of identical pots, then summed over your list. Each pot's weight is also divided by the area of its base, which shows how concentrated the load is.</p>
+<p><b>Total.</b> Wet mix plus pot plus plant, multiplied by the number of identical pots, then summed over your list. Each pot's weight is also divided by the area of its base, which shows how concentrated the load is. "Show the calculation for each pot" under the list prints every step with its numbers.</p>
+<p><b>Load on the floor.</b> If you enter the length and depth of the balcony floor, the planner divides the total by that area. If you also give a live-load figure – the one from your building's documents, or the 60 psf that Washington State's residential code lists for exterior balconies as an example of such a table – it shows what share of that figure the pots alone use and marks three steps: below half, above half, above the whole figure. The half-way mark is this site's own caution line. The share is arithmetic, not a clearance: the same figure has to cover people, furniture and snow, and it only means something for a balcony that was built to it and is still sound.</p>
 <figure>
 <svg viewBox="0 0 360 200" role="img" aria-labelledby="pw-svg-t">
 <title id="pw-svg-t">Cross-section of a tapered pot with headspace, wet mix, wall and plant</title>
@@ -116,7 +132,7 @@
 
 <h2 id="limits">Limits and what the planner does not do</h2>
 <p>All figures are estimates for typical mixes and walls. A pot without drainage holes after heavy rain, or a full saucer, adds more. People, furniture, a grill and snow are not included.</p>
-<aside class="caution">The planner gives no verdict on whether your balcony can carry these weights. Only the building manager, the owner or a structural engineer can answer that, and where heavy pots stand may matter as much as the total. Print the data sheet and give it to them; the background is in <a href="/guides/balcony-weight-limit-planters/">how much weight a balcony can hold</a>.</aside>
+<aside class="caution">The planner gives no verdict on whether your balcony can carry these weights, with or without a load figure. Only the building manager, the owner or a structural engineer can answer that, and where heavy pots stand may matter as much as the total. Print the data sheet and give it to them; the background is in <a href="/guides/balcony-weight-limit-planters/">how much weight a balcony can hold</a>.</aside>
 
 <h2 id="faq">FAQ</h2>
 <h3>Is a dry pot much lighter?</h3>
@@ -130,15 +146,17 @@
 <li><a href="https://extension.umn.edu/">University of Minnesota Extension</a> – choosing containers and potting mixes for container gardens.</li>
 <li><a href="https://www.rhs.org.uk/garden-inspiration/garden-types/balconies-roof-gardens">Royal Horticultural Society, Balconies and roof gardens</a> – advice to check load capacity before adding heavy containers.</li>
 <li>ASCE 7, Minimum Design Loads and Associated Criteria for Buildings – the standard engineers in the US use for balcony live loads; the planner does not apply it.</li>
+<li>Washington State Legislature, <a href="https://app.leg.wa.gov/wac/default.aspx?cite=51-51-0301">WAC 51-51-0301</a>, Table R301.5, minimum uniformly distributed live loads – source of the 60 psf and 40 psf example figures. Read in full on November 18, 2026.</li>
+<li>University of Maryland Extension, <a href="https://extension.umd.edu/resource/growing-vegetables-containers">Growing Vegetables in Containers</a> – "a 20-inch diameter container filled with moist growing medium and plants can weigh 100 lbs". Read on November 18, 2026.</li>
 </ul>
 <h2 id="related">Keep planning</h2><div class="cards"><a class="card" href="/guides/balcony-weight-limit-planters/"><span class="k">Weight &amp; safety</span><h3>How Much Weight Can a Balcony Hold? Planter Edition</h3><p>How heavy wet planters really get, why one big pot is a point load, where heavy pots belong, warning signs of a tired balcony and what to ask your landlord.</p></a><a class="card" href="/guides/lightweight-potting-mix/"><span class="k">Soil &amp; weight</span><h3>Lightweight Potting Mix: What Changes</h3><p>What makes potting mix heavy, how peat, coir, bark, perlite and pumice compare wet, why garden soil fails in pots and why gravel layers do not help.</p></a><a class="card" href="/guides/railing-planters/"><span class="k">Containers &amp; fixing</span><h3>Railing Planters: Sizes, Brackets and What to Grow</h3><p>Railing box sizes and wet weights, inside versus outside mounting, brackets for round, flat and square rails, drips onto neighbors and plants for shallow boxes.</p></a></div>
-<p class="reviewed">Last reviewed: October 31, 2026. Your inputs are stored only in this browser.</p></div>
+<p class="reviewed">Last updated: November 18, 2026. Your inputs are stored only in this browser.</p></div>
 </article>
 </div></main>
 <footer class="foot"><div class="wrap"><div class="cols">
 <div><h2>Balcony Bloom Guide</h2><p>Balcony gardening that starts from your balcony: its direction, the slab above, the wind and the weight it carries.</p><p>Information for planning only – not structural, legal or safety advice.</p></div>
-<div><h2>Tools</h2><ul><li><a href="/tools/sun-hours/">Sun & Shade Simulator</a></li><li><a href="/tools/pot-weight/">Pot Weight Planner</a></li><li><a href="/tools/wind-check/">Wind Exposure Check</a></li><li><a href="/tools/watering-planner/">Watering & Holiday Planner</a></li></ul></div>
-<div><h2>Plant profiles</h2><ul><li><a href="/plants/geranium-pelargonium/">Geranium (Pelargonium)</a></li><li><a href="/plants/lavender/">Lavender</a></li><li><a href="/plants/petunia/">Petunia</a></li><li><a href="/plants/rosemary/">Rosemary</a></li><li><a href="/plants/strawberry/">Strawberry</a></li><li><a href="/plants/">All plant profiles</a></li></ul></div>
+<div><h2>Tools</h2><ul><li><a href="/tools/sun-hours/">Sun & Shade Simulator</a></li><li><a href="/tools/pot-weight/">Pot Weight Planner</a></li><li><a href="/tools/wind-check/">Wind Exposure Check</a></li><li><a href="/tools/watering-planner/">Watering & Holiday Planner</a></li><li><a href="/tools/frost-dates/">Frost Date & Sowing Planner</a></li></ul></div>
+<div><h2>Plant profiles</h2><ul><li><a href="/plants/geranium-pelargonium/">Geranium (Pelargonium)</a></li><li><a href="/plants/lavender/">Lavender</a></li><li><a href="/plants/petunia/">Petunia</a></li><li><a href="/plants/rosemary/">Rosemary</a></li><li><a href="/plants/strawberry/">Strawberry</a></li><li><a href="/plants/">All plant profiles</a></li><li><a href="/plants/reference/">Crop &amp; plant reference</a></li></ul></div>
 <div><h2>Popular guides</h2><ul><li><a href="/guides/east-facing-balcony-plants/">East-Facing Balcony Plants</a></li><li><a href="/guides/balcony-weight-limit-planters/">How Much Weight Can a Balcony Hold? Planter Edition</a></li><li><a href="/guides/balcony-tomatoes/">Tomatoes on a Balcony: Container Size and Sun</a></li><li><a href="/guides/watering-balcony-plants-summer/">Watering Balcony Plants: How Often in Summer</a></li></ul></div>
 <div><h2>Site</h2><ul><li><a href="/about/">About &amp; method</a></li><li><a href="/contact/">Contact</a></li><li><a href="/imprint/">Imprint</a></li><li><a href="/privacy/">Privacy policy</a></li><li><button type="button" class="linklike" data-privacy-settings>Privacy settings</button></li></ul></div>
 </div><p class="small" style="color:inherit;opacity:.8;margin-top:18px">© 2026 AdStern, Vienna · Fonts: Young Serif and Atkinson Hyperlegible (SIL Open Font License)</p></div></footer>

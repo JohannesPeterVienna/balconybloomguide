@@ -206,3 +206,24 @@ footer.foot li { margin-bottom: .45em; }
 .vorteile li { display: flex; flex-direction: column; gap: 2px; padding: .8rem 0; border-bottom: 1px solid var(--rule); }
 .vorteile b::before { content: "✓"; color: var(--sun-bar); margin-right: .45rem; }
 .vorteile span { color: var(--muted); font-size: .93rem; }
+
+/* tools: example chips, copy fallback, calculation steps, wide result tables (added Nov 18, 2026) */
+.examples { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 14px; }
+.examples .lbl { margin: 0 .3em 0 0; }
+.chip { background: var(--paper); color: var(--ink); border: 1.5px solid var(--rule); border-radius: 999px; padding: .35em .9em; min-height: 40px; cursor: pointer; font-size: .92rem; text-align: left; }
+.chip:hover { border-color: var(--ink); }
+.sharebar { margin-top: 12px; }
+.copybox { width: 100%; margin-top: 8px; font: .85rem/1.4 ui-monospace, Menlo, Consolas, monospace; background: var(--paper); color: var(--ink); border: 1.5px solid var(--rule); border-radius: 10px; padding: .5em; }
+details.steps { margin: 1em 0; border: 1px solid var(--rule); border-radius: 12px; padding: .5em .9em; background: var(--paper); }
+details.steps summary { cursor: pointer; font-weight: 700; min-height: 32px; }
+details.steps ul { margin: .6em 0; padding-left: 1.2em; font-size: .93rem; overflow-wrap: anywhere; }
+.tablewrap table.data.wide { min-width: 980px; }
+.loadmsg[data-state="high"], .loadmsg[data-state="over"] { border-left-color: var(--sun); border-left-width: 8px; }
+.loadmsg[data-state="over"] { outline: 2px solid var(--ink); }
+#ref-perennials tr[data-state="out"] [data-winter], #ref-perennials tr[data-state="protect"] [data-winter], #ref-perennials tr[data-state="in"] [data-winter] { font-weight: 700; }
+.trybox { background: var(--card); border: 1px solid var(--rule); border-left: 5px solid var(--sun); border-radius: 12px; padding: .8em 1em; margin: 1.2em 0; }
+.trybox p { margin: 0 0 .5em; } .trybox p:last-child { margin: 0; }
+.tool.quick { text-align: left; }
+@media print { .examples, .sharebar, details.steps summary { display: none !important; } }
+.fields.wide { grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); }
+.results .result-grid + p, .results .result-grid + h3, .results .result-grid + ul { margin-top: 1em; }
