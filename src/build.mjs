@@ -29,7 +29,9 @@ const PUBLISHED_ISO = '2026-10-31';
 // computed table or a preset tool link, home/About/privacy changed. Plant profiles, imprint and contact are unchanged.
 const EW = 'November 18, 2026';
 const EW_ISO = '2026-11-18';
-const V = '20261118a';
+const V = '20261118b';
+// Profiles whose overwintering zones now come from data.js (wording changed on November 18).
+const PLANTS_CHANGED = ['lavender', 'rosemary'];
 // Guides corrected on November 4: rosemary hardiness aligned with the plant profile.
 // (On November 18 every guide changed, see EW below.)
 // Pages that never load the AdSense script (legal and contact pages, 404).
@@ -54,8 +56,21 @@ const TOOL_SHORT = { 'sun-hours': 'Sun & Shade Simulator', 'pot-weight': 'Pot We
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const strip = (h) => h.replace(/<svg[\s\S]*?<\/svg>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&[a-z#0-9]+;/gi, ' ');
 
+// Zone figures for overwintered plants are written once, in data.js. Texts use {{pot:slug:key}} with the keys
+// lo/hi (zones in the ground), out (pot stays outside from this zone), plo/phi (band with shelter), in (this zone and colder: indoors).
+const PER = Object.fromEntries(BBData.PERENNIALS.map((r) => [r[3], { lo: r[1], hi: r[2], out: r[5], plo: r[6], phi: Math.min(13, r[5] - 1), in: r[6] - 1 }]));
+const potTokens = (raw, file) => raw.replace(/\{\{pot:([a-z-]+):([a-z]+)\}\}/g, (m, slug, key) => {
+  if (!PER[slug] || PER[slug][key] == null || PER[slug][key] > 13) throw new Error(`unknown zone token ${m} in ${file}`);
+  return String(PER[slug][key]);
+});
+const potBand = (slug) => { const p = PER[slug]; return `Outdoors from zone ${p.out}; sheltered and wrapped in ${p.plo === p.phi ? 'zone ' + p.plo : `zones ${p.plo}–${p.phi}`}`; };
+// These sources must take their overwintering zones from the data file, not from hand-typed numbers.
+const ZONE_SOURCES = { 'plants/lavender.html': 'lavender', 'plants/rosemary.html': 'rosemary', 'guides/overwintering-balcony-plants.html': 'rosemary' };
 function readFragment(file) {
-  const raw = fs.readFileSync(file, 'utf8');
+  const rel = path.relative(path.join(ROOT, 'src'), file).split(path.sep).join('/');
+  let raw = fs.readFileSync(file, 'utf8');
+  if (ZONE_SOURCES[rel] && !raw.includes(`{{pot:${ZONE_SOURCES[rel]}:out}}`)) throw new Error(`${rel} must print its overwintering zones from data.js ({{pot:${ZONE_SOURCES[rel]}:out}})`);
+  raw = potTokens(raw, rel);
   const m = raw.match(/^<!--meta\s*([\s\S]*?)-->\s*/);
   if (!m) throw new Error('no meta block in ' + file);
   return { meta: JSON.parse(m[1]), body: raw.slice(m[0].length).trim() };
@@ -191,7 +206,7 @@ function orientationTable(facing) {
     const y = BBSun.year(lat, 0, { ...STD, facing });
     return `<tr><td>${lat}° N<br><span class="small">${where}</span></td>${months.map(([m]) => `<td>${y.railing[m - 1].toFixed(1)}</td><td>${y.middle[m - 1].toFixed(1)}</td><td>${y.back[m - 1].toFixed(1)}</td>`).join('')}<td><a href="${stdLink({ lat, lon: 0, deg: facing, month: 6 })}">Open</a></td></tr>`;
   }).join('\n');
-  return `<h2 id="computed-hours">Computed for this page: a ${FACE_NAME[facing]}-facing balcony at three latitudes</h2>
+  return `<h2 id="computed-hours">Computed for this page: ${FACE_NAME[facing] === 'east' ? 'an' : 'a'} ${FACE_NAME[facing]}-facing balcony at three latitudes</h2>
 <p>These hours were calculated for this page with the same code as the <a href="/tools/sun-hours/">Sun &amp; Shade Simulator</a>, for one stated balcony: 5 ft (1.5 m) deep, 10 ft (3 m) wide, the slab of the balcony above at 8.5 ft (2.6 m), walls on both sides, an open railing 3.5 ft (1.07 m) high and nothing opposite. Each cell is direct sun in hours on the 15th of the month, clear sky. In the Southern Hemisphere read the table for a balcony facing the opposite way with the months shifted by six.</p>
 <table class="data"><caption>Direct sun hours: railing / middle / back wall</caption>
 <thead><tr><th rowspan="2">Latitude</th>${months.map(([, n]) => `<th colspan="3">${n} 15</th>`).join('')}<th rowspan="2">Simulator</th></tr>
@@ -286,11 +301,11 @@ ${lede}
 ${AD('top')}
 ${rest}
 ${relatedCards(m.related)}
-<p class="reviewed">Published: ${UPDATED}. Found an error? <a href="/contact/">Tell us</a>.</p>
+<p class="reviewed">${PLANTS_CHANGED.includes(s) ? `Last updated: ${EW} (published ${UPDATED})` : `Published: ${UPDATED}`}. Found an error? <a href="/contact/">Tell us</a>.</p>
 </article><aside class="side" aria-label="Advertisement">${AD('side')}</aside></div>`;
-  pages.push({ path: `/plants/${s}/`, kind: 'guide', ads: true, modified: UPDATED_ISO, title: m.title, description: m.description, html, navCurrent: '/plants/',
+  pages.push({ path: `/plants/${s}/`, kind: 'guide', ads: true, modified: PLANTS_CHANGED.includes(s) ? EW_ISO : UPDATED_ISO, title: m.title, description: m.description, html, navCurrent: '/plants/',
     crumbs: [['Home', '/'], ['Plant profiles', '/plants/'], [short, `/plants/${s}/`]],
-    schema: [{ '@type': 'Article', headline: m.h1, description: m.description, datePublished: UPDATED_ISO, dateModified: UPDATED_ISO, inLanguage: 'en', mainEntityOfPage: `${SITE}/plants/${s}/`, publisher: { '@type': 'Organization', name: 'AdStern – Agentur für digitales Marketing', url: SITE + '/about/' } }, faq].filter(Boolean) });
+    schema: [{ '@type': 'Article', headline: m.h1, description: m.description, datePublished: UPDATED_ISO, dateModified: PLANTS_CHANGED.includes(s) ? EW_ISO : UPDATED_ISO, inLanguage: 'en', mainEntityOfPage: `${SITE}/plants/${s}/`, publisher: { '@type': 'Organization', name: 'AdStern – Agentur für digitales Marketing', url: SITE + '/about/' } }, faq].filter(Boolean) });
 }
 
 // tools
@@ -370,9 +385,9 @@ pages.push({ path: '/plants/', kind: 'index', ads: false, modified: EW_ISO, titl
 <div class="cards">${PLANTS.map(plantCard).join('')}</div>
 <h2 id="compare">The ten plants side by side</h2><div class="tablewrap"><table class="data"><caption>Short version of each profile; details, sources and exceptions are on the plant pages</caption><thead><tr><th>Plant</th><th>Direct sun</th><th>Typical pot</th><th>Wind</th><th>Winter outside zones 10–11</th></tr></thead><tbody>
 <tr><td><a href="/plants/geranium-pelargonium/">Geranium</a></td><td>6 h+</td><td>8–10 in or railing box</td><td>Good</td><td>Indoors, cuttings or bare-root</td></tr>
-<tr><td><a href="/plants/lavender/">Lavender</a></td><td>6–8 h+</td><td>12–14 in, porous</td><td>Good</td><td>Outdoors from zone 8, sheltered in 6–7</td></tr>
+<tr><td><a href="/plants/lavender/">Lavender</a></td><td>6–8 h+</td><td>12–14 in, porous</td><td>Good</td><td>${potBand('lavender')}</td></tr>
 <tr><td><a href="/plants/petunia/">Petunia</a></td><td>6 h+</td><td>10–12 in, basket, box</td><td>Moderate</td><td>Grown as an annual</td></tr>
-<tr><td><a href="/plants/rosemary/">Rosemary</a></td><td>6–8 h+</td><td>12–16 in</td><td>Good</td><td>Outdoors from zone 9; zone 8 sheltered and wrapped, in during hard frost; zone 7 and colder cool and bright indoors</td></tr>
+<tr><td><a href="/plants/rosemary/">Rosemary</a></td><td>6–8 h+</td><td>12–16 in</td><td>Good</td><td>${potBand('rosemary')}; colder: cool and bright indoors</td></tr>
 <tr><td><a href="/plants/strawberry/">Strawberry</a></td><td>6–8 h</td><td>8 in per plant, rail box</td><td>Good</td><td>Pots grouped and wrapped, or replant</td></tr>
 <tr><td><a href="/plants/cherry-tomato/">Cherry tomato</a></td><td>6–8 h</td><td>2–10 gal by type</td><td>Moderate, staked</td><td>Annual</td></tr>
 <tr><td><a href="/plants/basil/">Basil</a></td><td>6–8 h</td><td>8 in+</td><td>Poor</td><td>Annual</td></tr>
@@ -390,12 +405,12 @@ pages.push({ path: '/plants/', kind: 'index', ads: false, modified: EW_ISO, titl
   const D = BBData, P = BBPlan;
   const w = (k, wet) => { const x = P.containerWeight(D.CONTAINERS[k].gal, wet); return `${x.lb[0].toFixed(0)}–${x.lb[1].toFixed(0)} lb (${x.kg[0].toFixed(0)}–${x.kg[1].toFixed(0)} kg)`; };
   const cropRows = D.CROPS.map((c) => {
-    const cls = c[2] ? D.CLASSES[c[2]] : null, season = cls ? cls.season : 'none', light = cls ? D.LIGHT[cls.season] : null;
+    const cls = c[2] ? D.CLASSES[c[2]] : null, season = cls ? cls.season : 'none', light = D.LIGHT_NAMED[c[0]] ? D.LIGHT[D.LIGHT_NAMED[c[0]]] : null;
     const cont = c[6].length ? c[6].map((k) => `${D.CONTAINERS[k].name}: ${D.CONTAINERS[k].gal[0]}–${D.CONTAINERS[k].gal[1]} gal, ${D.CONTAINERS[k].depth[0]}–${D.CONTAINERS[k].depth[1]} in deep`).join('<br>or ') : 'no size group named';
     const wt = c[6].length ? c[6].map((k) => w(k, 0.75)).join('<br>or ') : '–';
     return `<tr data-season="${season}" data-size="${c[6].join(' ')}" data-min="${light ? light[0] : ''}"><th scope="row">${esc(c[1])}</th><td>${cls ? cls.name + ' (' + cls.season + '-season)' : 'not in the source'}</td><td>${cls ? esc(cls.rule) : '–'}</td><td>${c[5] ? c[5][0] + '–' + c[5][1] + ' weeks' : (cls ? 'none given' : '–')}</td><td>${c[3] == null ? '–' : c[3] + (c[4] ? ' (from transplanting)' : '')}</td><td>${light ? light[0] + '–' + light[1] + ' h' : 'not given'}</td><td>${cont}</td><td>${wt}</td><td>${esc(c[7]) || ''}</td></tr>`;
   }).join('\n');
-  const perRows = D.PERENNIALS.map((r) => `<tr data-minzone="${r[1]}"><th scope="row"><a href="/plants/${r[3]}/">${esc(r[0])}</a></th><td>${r[1]}–${r[2]}</td><td>zone ${Math.min(13, r[1] + 2)} and warmer</td><td>zones ${r[1]}–${Math.min(13, r[1] + 1)}</td><td data-winter>Choose your zone above</td><td>${esc(r[4])}</td></tr>`).join('\n');
+  const perRows = D.PERENNIALS.map((r, i) => `<tr data-i="${i}"><th scope="row"><a href="/plants/${r[3]}/">${esc(r[0])}</a></th><td>${r[1]}–${r[2]}</td><td>${r[5] > 13 ? 'never without shelter' : `zone ${r[5]} and warmer`}</td><td>${r[5] > 13 ? `zone ${r[6]} and warmer` : r[5] - 1 === r[6] ? `zone ${r[6]}` : `zones ${r[6]}–${r[5] - 1}`}</td><td data-winter>Choose your zone above</td><td>${esc(r[4])}</td></tr>`).join('\n');
   const contRows = ['L', 'M', 'S'].map((k) => { const c = D.CONTAINERS[k], x = P.containerWeight(c.gal, 0.75); return `<tr><th scope="row">${c.name}</th><td>${c.gal[0]}–${c.gal[1]} gal (${x.litres[0].toFixed(0)}–${x.litres[1].toFixed(0)} L)</td><td>${c.depth[0]}–${c.depth[1]} in (${(c.depth[0] * 2.54).toFixed(0)}–${(c.depth[1] * 2.54).toFixed(0)} cm)</td><td>${w(k, 0.6)}</td><td>${w(k, 0.75)}</td></tr>`; }).join('\n');
   const zoneRows = Array.from({ length: 13 }, (_, i) => { const lo = -60 + i * 10, c = (f) => ((f - 32) * 5 / 9).toFixed(1); return `<tr><th scope="row">${i + 1}</th><td>${lo} to ${lo + 10} °F</td><td>${c(lo)} to ${c(lo + 10)} °C</td><td>${i + 1}a: ${lo} to ${lo + 5} °F · ${i + 1}b: ${lo + 5} to ${lo + 10} °F</td></tr>`; }).join('\n');
   // cross-check of the weight model against the one figure UMD states
@@ -410,7 +425,7 @@ ${FORMS.reference}
 ${cropRows}
 </tbody></table></div>
 <div style="max-width:74ch">
-<p><b>How to read it.</b> The frost class says how the crop relates to the last spring frost; the <a href="/tools/frost-dates/">Frost Date &amp; Sowing Planner</a> turns the rule into calendar dates for your city. The light column carries the two figures University of Maryland Extension gives for container vegetables – 6–8 hours of direct sun for warm-season crops, 3–5 hours for cool-season crops – assigned here by the season group Colorado State puts each crop in. Maryland names tomato, pepper, eggplant and squash as its warm-season examples and lettuce, spinach and Asian greens as its cool-season examples; for the other crops the assignment is ours. Enter the hours the <a href="/tools/sun-hours/">Sun &amp; Shade Simulator</a> gives for your spot and the table keeps the rows whose figure starts at or below them.</p>
+<p><b>How to read it.</b> The frost class says how the crop relates to the last spring frost; the <a href="/tools/frost-dates/">Frost Date &amp; Sowing Planner</a> turns the rule into calendar dates for your city. The light column carries the two figures University of Maryland Extension gives for container vegetables: 6–8 hours of direct sun for warm-season crops, naming tomato, pepper, eggplant and squash, and 3–5 hours for cool-season crops, naming lettuce, spinach and Asian greens. Only the crops Maryland names have a figure in the table; for every other row the cell says "not given" rather than assuming that, say, potatoes or broccoli manage on the hours of a lettuce. Enter the hours the <a href="/tools/sun-hours/">Sun &amp; Shade Simulator</a> gives for your spot and the table keeps the rows whose figure starts at or below them; rows without a figure are hidden while that filter is set.</p>
 <p>Herbs and strawberries have a container size in the Maryland list but no frost class in the Colorado guide, so those cells stay empty rather than being filled from memory. The ten <a href="/plants/">plant profiles</a> cover basil, rosemary, lavender and strawberries in detail.</p>
 </div>
 <h2 id="containers">The three container groups and what they weigh</h2>
@@ -424,14 +439,15 @@ ${contRows}
 <p><b>Cross-check.</b> The same Maryland pages state that a 20-inch container filled with moist growing medium and plants "can weigh 100 lbs". The <a href="/tools/pot-weight/">Pot Weight Planner</a> gives ${(big.eachKg * P.LB).toFixed(0)} lb (${big.eachKg.toFixed(0)} kg) for a round plastic pot 20 in across the top, 16 in at the base and 18 in tall in standard mix, without the plant (${big.soilL.toFixed(0)} L of mix). The two figures agree in size; the planner's is higher because this pot is deep, and it shows why the weight has to be worked out per pot rather than guessed.</p>
 </div>
 <h2 id="winter">Plants kept over winter: does the two-zone margin hold?</h2>
-<div class="tablewrap"><table class="data" id="ref-perennials"><caption>USDA zones for the plant in the ground as cited on the profile page, and the margin Penn State Extension advises for containers ("go two zones colder")</caption>
+<div class="tablewrap"><table class="data" id="ref-perennials"><caption>USDA zones for the plant in the ground as cited on the profile page, and the zones in which the pot can stay outside – never less cautious than Penn State Extension's "go two zones colder"</caption>
 <thead><tr><th>Plant</th><th>Zones in the ground</th><th>In a pot, outside without extra care</th><th>In a pot, with shelter and wrapping</th><th>On your balcony</th><th>Note</th></tr></thead>
 <tbody>
 ${perRows}
 </tbody></table></div>
 <div style="max-width:74ch">
-<p>The rule behind the table: the USDA zone of a plant describes it growing in the ground. Penn State Extension points out that the roots of a container plant above ground can be as cold as the winter air and advises choosing plants rated two zones colder than your own, in larger pots and with some protection. The table applies that literally. A plant counts as safe outside where your zone is at least two above its coldest zone; in the two zones below that it is hardy in the ground but has lost the margin, so it needs the sheltered wall, the wrapped pot and the dry feet described in <a href="/guides/overwintering-balcony-plants/">overwintering balcony plants</a>; colder than that it comes indoors or is replaced. The middle band is our reading of "provide some protection", not a quotation.</p>
-<p>The zones in this table were taken from this site's plant profiles, where each is traced to its source (mostly the Missouri Botanical Garden Plant Finder). They were checked when the profiles were published on November 4, 2026; the Plant Finder could not be reached again from our build environment on November 18, so that check was not repeated.</p>
+<p>The rule behind the table: the USDA zone of a plant describes it growing in the ground. Penn State Extension points out that the roots of a container plant above ground can be as cold as the winter air and advises choosing plants rated two zones colder than your own, in larger pots and with some protection. No row here is less cautious than that: a pot is listed as staying outside only where the zone is at least two above the plant's coldest zone. Where the sources of a profile are more cautious still, the table follows them – English lavender is rated to zone 5, yet a pot stays out unprotected only from zone 8, because wet, cold roots kill it; a bigleaf hydrangea is never left without shelter, because its flower buds are less hardy than the plant. The middle column is the band in which the profile describes shelter against the wall and a wrapped pot; see <a href="/guides/overwintering-balcony-plants/">overwintering balcony plants</a>.</p>
+<p>These zone bands are stored once, in the site's data file. The profiles of lavender and rosemary, the overwintering guide, the plant overview and this table all print them from there, and the build fails if a page is missing them.</p>
+<p>The ground zones were taken from this site's plant profiles, where each is traced to its source (mostly the Missouri Botanical Garden Plant Finder). They were checked when the profiles were published on November 4, 2026; the Plant Finder could not be reached again from our build environment on November 18, so that check was not repeated.</p>
 </div>
 <h2 id="zones">USDA hardiness zones in degrees</h2>
 <div class="tablewrap"><table class="data"><caption>Zone bands by average annual extreme minimum temperature (USDA Plant Hardiness Zone Map 2023, based on 1991–2020)</caption>

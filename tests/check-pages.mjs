@@ -54,7 +54,7 @@ if (fs.readFileSync(path.join(DOCS, 'ads.txt'), 'utf8') !== 'google.com, pub-781
 // lastmod changes only for pages whose content changed: imprint and contact keep the October 31 rebuild date, the ten
 // plant profiles November 4; everything else changed on November 18 (tools extended, frost planner and reference added,
 // every guide with a computed table or preset tool link, home, About, privacy). The visible date must match.
-const PROFILE = /^\/plants\/(?!reference\/)[a-z-]+\/$/;
+const PROFILE = /^\/plants\/(?!reference\/|lavender\/|rosemary\/)[a-z-]+\/$/;   // lavender and rosemary: zones now printed from data.js
 const UNCHANGED = /^\/(imprint|contact)\/$/;
 for (const m of fs.readFileSync(path.join(DOCS, 'sitemap.xml'), 'utf8').matchAll(/<loc>https:\/\/balconybloomguide\.com([^<]*)<\/loc><lastmod>([^<]*)<\/lastmod>/g)) {
   const want = UNCHANGED.test(m[1]) ? '2026-10-31' : PROFILE.test(m[1]) ? '2026-11-04' : '2026-11-18';
@@ -71,6 +71,25 @@ if (sitemap.includes('/guides/balcony-calendar/')) problems.push('withdrawn cale
 const cal = fs.existsSync(path.join(DOCS, 'guides/balcony-calendar/index.html')) ? fs.readFileSync(path.join(DOCS, 'guides/balcony-calendar/index.html'), 'utf8') : '';
 if (!/noindex/.test(cal) || !cal.includes('<link rel="canonical" href="https://balconybloomguide.com/tools/frost-dates/">') || !cal.includes('http-equiv="refresh" content="0; url=/tools/frost-dates/"')) problems.push('calendar redirect page incomplete');
 for (const f of files) if (!f.includes('balcony-calendar') && fs.readFileSync(f, 'utf8').includes('/guides/balcony-calendar/')) problems.push('link to the withdrawn calendar guide in ' + path.relative(DOCS, f));
+// overwintering zones: profile, guide, overview and data file must say the same (one source: data.js)
+{
+  const { createRequire } = await import('node:module');
+  const D = createRequire(import.meta.url)('../docs/assets/js/data.js');
+  const read = (u) => fs.readFileSync(path.join(DOCS, u, 'index.html'), 'utf8').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  for (const [slug, word] of [['lavender', 'lavender'], ['rosemary', 'Rosemary']]) {
+    const r = D.PERENNIALS.find((x) => x[3] === slug), prof = read(`/plants/${slug}/`), guide = read('/guides/overwintering-balcony-plants/'), hub = read('/plants/'), ref = read('/plants/reference/');
+    if (!new RegExp(`Zones? ${r[5]} and warmer: `).test(prof) || !prof.includes(`Zones ${r[6]} and ${r[5] - 1}: `) || !prof.includes(`Zone ${r[6] - 1} and colder: `)) problems.push(`profile ${slug}: overwintering bands differ from data.js`);
+    if (!prof.includes(`zones ${r[1]} to ${r[2]}`)) problems.push(`profile ${slug}: ground zones differ from data.js`);
+    if (!new RegExp(`${word}[^.]*USDA ${r[1]}–${r[2]}[^.]*zone ${r[5]} and warmer`, 'i').test(guide)) problems.push(`overwintering guide: ${slug} differs from data.js`);
+    if (!hub.includes(`Outdoors from zone ${r[5]}; sheltered and wrapped in zones ${r[6]}–${r[5] - 1}`)) problems.push(`plant overview: ${slug} differs from data.js`);
+    if (!ref.includes(`${r[1]}–${r[2]} zone ${r[5]} and warmer zones ${r[6]}–${r[5] - 1}`)) problems.push(`reference: ${slug} differs from data.js`);
+    for (const [name, t] of [['profile', prof], ['guide', guide]]) for (const m of t.matchAll(new RegExp(`(?:stays? out|leave it out|can stay out(?:side)?)[^.]{0,40}zone (\\d+)`, 'gi'))) if (name === 'profile' && +m[1] < r[5]) problems.push(`${name} ${slug}: says the pot stays out in zone ${m[1]}, data.js says from ${r[5]}`);
+  }
+  // the light filter must not present crops the source does not name
+  const refHtml = fs.readFileSync(path.join(DOCS, 'plants/reference/index.html'), 'utf8');
+  const lit = [...refHtml.matchAll(/<tr data-season="[a-z]+" data-size="[A-Z ]*" data-min="(\d+)"><th scope="row">([^<]+)</g)].map((m) => m[2]).sort().join('|');
+  if (lit !== 'Eggplant|Lettuce (leaf types)|Pepper|Spinach|Squash, summer|Squash, winter|Tomato') problems.push('reference: light figures for crops UMD does not name: ' + lit);
+}
 // new pages are in the sitemap
 for (const u of ['/tools/frost-dates/', '/plants/reference/']) if (!sitemap.includes(u)) problems.push('missing in sitemap: ' + u);
 console.log(problems.length ? problems.join('\n') : `${sitemap.length} sitemap pages OK`);

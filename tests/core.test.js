@@ -136,6 +136,7 @@ test('reference data is complete and consistent', () => {
     if (c[2] === null) assert.equal(c[3], null);
   }
   for (const r of D.PERENNIALS) assert.ok(r[1] >= 1 && r[1] <= r[2] && r[2] <= 13);
+  for (const s of D.STATIONS) assert.ok(!/ US$|DWTNC/.test(s[2]) && /, [A-Z]{2}$/.test(s[2]), s[2]);
 });
 test('container weight is volume times wet weight per litre', () => {
   const w = P.containerWeight([8, 10], 0.75);
@@ -144,29 +145,60 @@ test('container weight is volume times wet weight per litre', () => {
   assert.ok(Math.abs(P.containerWeight([1, 3]).kg[1] - 3 * 3.78541 * 0.75) < 1e-9);    // default: standard mix as in calc.js
   assert.equal(C.MIXES.potting.wet, 0.75); assert.equal(C.MIXES.lightweight.wet, 0.6);
 });
-test('floor load: average, share and the three steps', () => {
+test('floor load: average and share, no reassuring class', () => {
   const m2 = 10 * 5 * 0.3048 * 0.3048, ref = 60 * P.PSF;
   const r = P.areaLoad(125, m2, ref);
   assert.ok(Math.abs(r.avgKgM2 - 26.91) < 0.01);
   assert.ok(Math.abs(r.avgPsf - 5.51) < 0.01);
-  assert.equal(r.state, 'low');
-  assert.equal(P.areaLoad(ref * m2 * 0.5, m2, ref).state, 'high');     // exactly half counts as "more than half"
+  assert.ok(Math.abs(r.share - 0.0919) < 0.0005);
+  assert.equal(r.state, 'share');                                       // a percentage, never "low" or "fine"
+  for (const k of [0.01, 0.3, 0.5, 0.99]) assert.equal(P.areaLoad(ref * m2 * k, m2, ref).state, 'share');
   assert.equal(P.areaLoad(ref * m2, m2, ref).state, 'over');           // the whole figure counts as "over"
   assert.equal(P.areaLoad(125, m2, null).state, 'none');
   assert.equal(P.areaLoad(125, 0, ref), null);
   assert.equal(P.areaLoad(NaN, m2, ref), null);
   assert.ok(Math.abs(60 * P.PSF - 292.9) < 0.1);                        // 60 psf in kg/m²
 });
-test('winter check for pots applies the two-zone margin', () => {
-  assert.equal(P.potWinter(7, 5), 'out');
-  assert.equal(P.potWinter(6, 5), 'protect');
-  assert.equal(P.potWinter(5, 5), 'protect');
-  assert.equal(P.potWinter(4, 5), 'in');
-  assert.equal(P.potWinter(NaN, 5), null);
-  assert.equal(P.potWinter(14, 5), null);
+test('winter check for pots reads the bands from the data and is never less cautious than two zones', () => {
+  const row = (slug) => D.PERENNIALS.find((r) => r[3] === slug);
+  for (const r of D.PERENNIALS) { assert.ok(r[5] >= r[1] + 2, r[0] + ': pot stays out closer than two zones'); assert.ok(r[6] >= r[1] && r[6] < r[5], r[0]); }
+  assert.deepEqual([9, 8, 7, 6, 5, 4].map((z) => P.potWinter(z, row('lavender'))), ['out', 'out', 'protect', 'protect', 'in', 'in']);
+  assert.deepEqual([11, 10, 9, 8, 7].map((z) => P.potWinter(z, row('rosemary'))), ['out', 'out', 'protect', 'protect', 'in']);
+  assert.deepEqual([13, 8, 6, 5].map((z) => P.potWinter(z, row('hydrangea'))), ['protect', 'protect', 'protect', 'in']);   // never without shelter
+  assert.equal(P.potWinter(NaN, row('lavender')), null);
+  assert.equal(P.potWinter(14, row('lavender')), null);
+  assert.equal(P.potWinter(7, undefined), null);
   assert.deepEqual(P.zoneFromMinF(-3), { zone: 6, half: 'b', lowF: -10, highF: 0 });
   assert.equal(P.zoneFromMinF(-60).zone, 1); assert.equal(P.zoneFromMinF(55).zone, 12); assert.equal(P.zoneFromMinF(65).zone, 13);
   assert.equal(P.zoneFromMinF(-7).half, 'a');
+});
+test('every station × both risk levels: no nonsense season, low-frost stations get no schedule', () => {
+  const noSchedule = D.STATIONS.filter((s) => !s[6] || !P.freezeRegular(s[11])).map((s) => s[0]).sort();
+  assert.deepEqual(noSchedule, ['Honolulu, HI', 'Los Angeles, CA', 'Miami, FL', 'New Orleans, LA', 'Orlando, FL', 'Phoenix, AZ', 'San Diego, CA', 'San Francisco, CA', 'Tampa, FL']);
+  for (const s of D.STATIONS) {
+    if (!s[6] || !P.freezeRegular(s[11])) continue;
+    for (const [lfK, ffK] of [[6, 9], [7, 8]]) {
+      const lf = P.doy(s[lfK]), ff = P.doy(s[ffK]), free = P.daysBetween(lf, ff);
+      assert.ok(free >= 100 && free <= 340, `${s[0]}: ${free} frost-free days`);
+      for (const c of D.CROPS) {
+        const r = P.schedule(c, lf, ff, D.CLASSES);
+        if (!r) continue;
+        assert.equal(r.seasonDays, free - D.CLASSES[c[2]].to, `${s[0]} ${c[1]}`);
+        assert.ok(r.seasonDays >= 86 && r.seasonDays <= 365, `${s[0]} ${c[1]}: ${r.seasonDays}`);
+        assert.ok(!/NaN|undefined/.test(r.outText + r.sowText + r.harvestText));
+      }
+    }
+  }
+  // the case from the review: Phoenix and Tampa median dates must not produce "only 12 days" even if someone enters them by hand
+  for (const name of ['Phoenix, AZ', 'Tampa, FL']) {
+    const s = D.STATIONS.find((x) => x[0] === name);
+    for (const c of D.CROPS) { const r = P.schedule(c, P.doy(s[6]), P.doy(s[9]), D.CLASSES); if (r) assert.ok(r.seasonDays > 300, `${name} ${c[1]}: ${r.seasonDays}`); }
+  }
+});
+test('light figures only for the crops the source names', () => {
+  assert.deepEqual(Object.keys(D.LIGHT_NAMED).sort(), ['eggplant', 'lettuce', 'pepper', 'spinach', 'summer-squash', 'tomato', 'winter-squash']);
+  for (const k of Object.keys(D.LIGHT_NAMED)) { const c = D.CROPS.find((x) => x[0] === k); assert.equal(D.CLASSES[c[2]].season, D.LIGHT_NAMED[k], k); }
+  assert.equal(D.STATIONS.find((s) => s[1] === 'USW00093134')[2], 'LOS ANGELES DWTN USC CAMPUS, CA');
 });
 test('shared links: round trip, hostile input, number and list limits', () => {
   const st = { city: 'New York, NY', deg: 90, p: ['Tomato & basil~round~40.6', 'x'], empty: '', none: null };

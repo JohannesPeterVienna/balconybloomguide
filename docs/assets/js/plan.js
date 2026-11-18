@@ -47,8 +47,9 @@
       res.sowText = range(out[0] - age[1] * 7, out[1] - age[0] * 7);
     }
     if (firstFrost != null) {
-      // planting out at the end of the window is the cautious case
-      res.seasonDays = daysBetween(wrap(out[1]), firstFrost);
+      // Planting out at the end of the window is the cautious case. Counted from the frost-free span, so a window that
+      // starts before the last frost can never wrap around the year into a nonsense figure.
+      res.seasonDays = Math.max(0, Math.min(365, daysBetween(lastFrost, firstFrost) - cls.to));
       if (dth != null) {
         res.harvestText = label(out[1] + dth);
         res.fit = res.seasonDays >= dth + 28 ? 'fits' : res.seasonDays >= dth ? 'tight' : 'short';
@@ -66,28 +67,30 @@
   /*
    * Average load of the pots over the balcony floor, compared with a live-load figure the user supplies.
    * The comparison is arithmetic only: the same figure also has to cover people, furniture and snow.
-   * state: 'none' (no figure), 'low' (< 50 %), 'high' (50–100 %), 'over' (more than the whole figure).
+   * state: 'none' (no figure), 'share' (a percentage, with no reassuring class), 'over' (pots alone reach the whole figure).
    */
+  // Stations where a freeze is not a yearly event get no frost-based schedule (NOAA: share of years with 32 °F or below).
+  var REGULAR_FREEZE = 90;
+  function freezeRegular(pct) { return pct >= REGULAR_FREEZE; }
   function areaLoad(totalKg, areaM2, refKgM2) {
     if (!(totalKg >= 0) || !(areaM2 > 0)) return null;
-    var avg = totalKg / areaM2, r = { avgKgM2: avg, avgPsf: avg / PSF, share: null, state: 'none', restKg: null };
+    var avg = totalKg / areaM2, r = { avgKgM2: avg, avgPsf: avg / PSF, share: null, state: 'none' };
     if (refKgM2 > 0) {
       r.share = avg / refKgM2;
-      r.state = r.share >= 1 ? 'over' : r.share >= 0.5 ? 'high' : 'low';
-      r.restKg = refKgM2 * areaM2 - totalKg;
+      r.state = r.share >= 1 ? 'over' : 'share';
     }
     return r;
   }
 
   /*
-   * Winter check for a plant in a pot. zone = the user's USDA zone (1–13), minZone = coldest zone the plant is
-   * rated for in the ground. Penn State Extension: "go two zones colder with containerized plants".
+   * Winter check for a plant in a pot. zone = the user's USDA zone (1–13); row = one row of BBData.PERENNIALS with
+   * potOut (index 5) and potProtect (index 6). The bands are data, not a formula, so the table cannot disagree with the profiles.
    */
-  function potWinter(zone, minZone) {
-    if (!(zone >= 1 && zone <= 13) || !(minZone >= 1)) return null;
-    if (zone >= minZone + 2) return 'out';        // rated two zones colder than the balcony
-    if (zone >= minZone) return 'protect';        // hardy in the ground here, but without the two-zone margin
-    return 'in';                                  // not hardy here even in the ground
+  function potWinter(zone, row) {
+    if (!(zone >= 1 && zone <= 13) || !row || !(row[6] >= 1)) return null;
+    if (zone >= row[5]) return 'out';
+    if (zone >= row[6]) return 'protect';
+    return 'in';
   }
   // USDA zone from the average annual extreme minimum temperature in °F: 10 °F bands, zone 1 starts at −60 °F; a/b halves of 5 °F.
   function zoneFromMinF(f) {
@@ -139,7 +142,7 @@
   function csv(rows) { return rows.map(function (r) { return r.map(csvCell).join(','); }).join('\r\n') + '\r\n'; }
 
   var api = { GAL: GAL, LB: LB, PSF: PSF, doy: doy, fromDoy: fromDoy, label: label, range: range, daysBetween: daysBetween, schedule: schedule,
-    containerWeight: containerWeight, areaLoad: areaLoad, potWinter: potWinter, zoneFromMinF: zoneFromMinF,
+    containerWeight: containerWeight, areaLoad: areaLoad, REGULAR_FREEZE: REGULAR_FREEZE, freezeRegular: freezeRegular, potWinter: potWinter, zoneFromMinF: zoneFromMinF,
     encodeState: encodeState, decodeState: decodeState, numIn: numIn, oneOf: oneOf, cleanText: cleanText, csvCell: csvCell, csv: csv };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BBPlan = api;

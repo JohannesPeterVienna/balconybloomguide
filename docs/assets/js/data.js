@@ -40,7 +40,7 @@
     ["Indianapolis, IN", "USW00093819", "INDIANAPOLIS, IN", 39.71, -86.28, "04/02", "04/15", "05/02", "10/13", "10/26", "11/07", 100.0],
     ["Kansas City, MO", "USW00003947", "KANSAS CITY INTL AP, MO", 39.3, -94.73, "03/30", "04/13", "04/29", "10/09", "10/24", "11/05", 100.0],
     ["Las Vegas, NV", "USW00023169", "LAS VEGAS MCCARRAN AP, NV", 36.07, -115.16, "12/20", "01/20", "02/14", "11/28", "12/15", "01/07", 94.3],
-    ["Los Angeles, CA", "USW00093134", "LOS ANGELES DWTNC CAMPUS, CA", 34.05, -118.24, null, null, null, null, null, null, 0.0],
+    ["Los Angeles, CA", "USW00093134", "LOS ANGELES DWTN USC CAMPUS, CA", 34.05, -118.24, null, null, null, null, null, null, 0.0],
     ["Louisville, KY", "USW00093821", "LOUISVILLE INTL AP, KY", 38.18, -85.74, "03/14", "03/31", "04/16", "10/28", "11/07", "11/23", 100.0],
     ["Madison, WI", "USW00014837", "MADISON DANE RGNL AP, WI", 43.14, -89.35, "04/16", "05/01", "05/16", "09/26", "10/10", "10/24", 100.0],
     ["Memphis, TN", "USW00013893", "MEMPHIS INTL AP, TN", 35.06, -89.99, "02/27", "03/16", "04/04", "11/02", "11/16", "12/03", 100.0],
@@ -85,8 +85,11 @@
     S: { name: 'Small', gal: [1, 3], depth: [4, 6], note: '' }
   };
   // Direct sun, UMD Extension "Growing Vegetables in Containers" (updated 23 Mar 2026):
-  // 6–8 h for warm-season crops, 3–5 h for cool-season crops.
+  // "6-8 hours of direct sun for warm-season crops (tomato, pepper, eggplant, squash) and 3-5 hours of direct sun
+  // for cool-season crops (lettuce, spinach, Asian greens)".
   var LIGHT = { warm: [6, 8], cool: [3, 5] };
+  // Only the crops UMD names as examples carry a light figure ("squash" covers both squash rows; "Asian greens" has no row here).
+  var LIGHT_NAMED = { tomato: 'warm', pepper: 'warm', eggplant: 'warm', 'summer-squash': 'warm', 'winter-squash': 'warm', lettuce: 'cool', spinach: 'cool' };
 
   // [key, name, class or null, days to harvest or null, fromTransplant, transplant age weeks [min,max] or null, container classes, remark]
   var CROPS = [
@@ -126,24 +129,29 @@
     ['strawberry', 'Strawberries', null, null, false, null, [], 'UMD: container depth of 8 inches']
   ];
 
-  // Plants kept for more than one year: USDA zones in the ground as cited on the profile page. [name, lowest zone, highest zone, profile slug, remark]
+  // Plants kept for more than one year – the one place where their zones are written down. Profiles, the overwintering
+  // guide, the plant overview and the winter table all read these rows.
+  // [name, lowest zone in the ground, highest zone, profile slug, remark, potOut, potProtect]
+  // potOut: lowest zone in which the pot stays outside without extra care (14 = never); potProtect: lowest zone in which
+  // it stays outside with shelter and wrapping. Never less cautious than Penn State's "two zones colder" (potOut ≥ lowest + 2,
+  // potProtect ≥ lowest); where the profile's sources are more cautious, their figure is used.
   var PERENNIALS = [
-    ['English lavender (Lavandula angustifolia)', 5, 8, 'lavender', 'cultivars differ'],
-    ['Bigleaf hydrangea (Hydrangea macrophylla)', 6, 9, 'hydrangea', 'many cultivars; flower buds are less hardy than the plant'],
-    ['Rosemary (species)', 8, 10, 'rosemary', "a few cultivars such as 'Arp' are tougher"],
-    ['Purple fountain grass', 9, 10, 'ornamental-grasses', ''],
-    ['Zonal geranium (Pelargonium)', 10, 11, 'geranium-pelargonium', 'usually overwintered indoors'],
-    ['Petunia', 10, 11, 'petunia', 'grown as an annual elsewhere'],
-    ['Fuchsia (most hybrids)', 10, 11, 'fuchsia', 'hardy fuchsia differs']
+    ['English lavender (Lavandula angustifolia)', 5, 8, 'lavender', 'cultivars differ; plants rated for zone 5 can still be damaged in harsh winters', 8, 6],
+    ['Bigleaf hydrangea (Hydrangea macrophylla)', 6, 9, 'hydrangea', 'flower buds are less hardy than the plant, so the pot is never left without shelter', 14, 6],
+    ['Rosemary (species)', 8, 10, 'rosemary', "a few cultivars such as 'Arp' are tougher", 10, 8],
+    ['Purple fountain grass', 9, 10, 'ornamental-grasses', '', 11, 9],
+    ['Zonal geranium (Pelargonium)', 10, 11, 'geranium-pelargonium', 'usually overwintered indoors', 12, 10],
+    ['Petunia', 10, 11, 'petunia', 'grown as an annual elsewhere', 12, 10],
+    ['Fuchsia (most hybrids)', 10, 11, 'fuchsia', 'hardy fuchsia differs', 12, 10]
   ];
 
   // Live-load figure read in full in an adopted code text (see /guides/balcony-weight-limit-planters/#design-loads).
   var LOAD_REFS = [
-    { key: 'wa60', psf: 60, label: '60 psf – exterior balconies and decks, Washington State Residential Code (WAC 51-51-0301, Table R301.5)' },
-    { key: 'wa40', psf: 40, label: '40 psf – rooms other than sleeping areas in the same table (for comparison)' }
+    { key: 'wa60', psf: 60, label: 'Example: 60 psf – "Balconies (exterior) and decks", Washington State residential code for one- and two-family houses and townhouses; need not apply to your building' },
+    { key: 'wa40', psf: 40, label: 'Example: 40 psf – "Areas other than sleeping areas" in the same table; need not apply to your building' }
   ];
 
-  var api = { RETRIEVED: RETRIEVED, STATIONS: STATIONS, CLASSES: CLASSES, CONTAINERS: CONTAINERS, LIGHT: LIGHT, CROPS: CROPS, PERENNIALS: PERENNIALS, LOAD_REFS: LOAD_REFS };
+  var api = { RETRIEVED: RETRIEVED, STATIONS: STATIONS, CLASSES: CLASSES, CONTAINERS: CONTAINERS, LIGHT: LIGHT, LIGHT_NAMED: LIGHT_NAMED, CROPS: CROPS, PERENNIALS: PERENNIALS, LOAD_REFS: LOAD_REFS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BBData = api;
 })(this);

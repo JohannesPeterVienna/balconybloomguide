@@ -195,7 +195,7 @@ console.log('✓ ad boxes: ins never hidden; label and margin only with filled/u
     const t = await page.textContent('#pot-results');
     if (!t.includes('<img src=x onerror="window.__x=1">')) fail('pots: name from the link is not shown as plain text');
     if ((await page.$$('#pot-results tbody tr')).length !== 2) fail('pots: invalid pots from a link were accepted');
-    if ((await page.getAttribute('#pot-results .loadmsg', 'data-state')) !== 'low' || !/Share of the 60 psf figure/.test(t)) fail('pots: floor load comparison missing');
+    if ((await page.getAttribute('#pot-results .loadmsg', 'data-state')) !== 'share' || !/as a share of the 60 psf figure/.test(t) || /Below half|less than half/i.test(t) || !/permanent load/.test(t)) fail('pots: floor load comparison missing');
     const csv = await csvOf(page, '#pot-csv');
     if (!csv.includes(`"'=1+1"`) || /(^|,|\n)"?[=+@-]/.test(csv.replace(/^﻿/, '').replace(/"'[=+@-]/g, '"x'))) fail('pots: CSV cell starting with = + - @ not defused');
     await page.selectOption('#area-ref', 'custom'); await page.fill('#area-refv', '2'); await page.waitForTimeout(350);
@@ -246,15 +246,19 @@ console.log('✓ ad boxes: ins never hidden; label and margin only with filled/u
       for (const risk of ['median', 'cautious']) {
         await page.selectOption('#fr-place', id); await page.selectOption('#fr-risk', risk);
         const t = await page.textContent('#frost-results');
-        if (/NOAA gives no freeze dates/.test(t)) { none += risk === 'median' ? 1 : 0; continue; }
+        if (/this planner gives none/.test(t)) { if (/Too short|Fits/.test(t)) fail('frost: schedule shown for ' + id); none += risk === 'median' ? 1 : 0; continue; }
         if (!/Tomato/.test(t) || /NaN|undefined|null/.test(t)) fail('frost: broken result for ' + id + ' ' + risk);
       }
     }
-    if (none !== 5) fail('frost: expected 5 stations without freeze dates, got ' + none);
+    if (none !== 9) fail('frost: expected 9 stations without a schedule (5 without freeze dates, 4 with rare freezes), got ' + none);
+    await page.selectOption('#fr-place', 'USW00026451'); await page.selectOption('#fr-risk', 'median');
+    const anc = await page.$$eval('#frost-results tbody tr', (r) => r.filter((x) => /^(Tomato|Squash, winter)/.test(x.textContent)).map((x) => x.textContent));
+    if (anc.length !== 2 || anc.some((x) => !/55 °F/.test(x) || /Fits:/.test(x))) fail('frost: very tender rows for Anchorage lack the temperature condition: ' + anc);
+    if (/Too short: only \d\d? days/.test(await page.textContent('#frost-results'))) fail('frost: nonsense season length');
     await page.selectOption('#fr-place', 'USW00094728'); await page.selectOption('#fr-risk', 'median');
     if (!/Mar 30/.test(await page.textContent('#frost-results .stat .v'))) fail('frost: New York median date is not Mar 30');
     const csv = await csvOf(page, '#frost-csv');
-    if (!/"Tomato","Very tender","Feb 23 – Mar 9","Apr 13"/.test(csv)) fail('frost: CSV row for tomato unexpected');
+    if (!/"Tomato","Very tender","Feb 23 – Mar 9","Apr 13; not before daytime temperatures stay above 55 °F \(13 °C\)"/.test(csv)) fail('frost: CSV row for tomato unexpected');
     await page.selectOption('#fr-place', 'custom');
     for (const [m, d] of [['2', '31'], ['4', '0'], ['4', '-2'], ['4', '']]) { await page.selectOption('#fr-lfm', m); await page.fill('#fr-lfd', d); await page.waitForTimeout(320); if (!/real calendar dates/.test(await page.textContent('#frost-results'))) fail(`frost: date ${m}/${d} accepted`); }
     await page.selectOption('#fr-lfm', '9'); await page.fill('#fr-lfd', '20'); await page.selectOption('#fr-ffm', '5'); await page.fill('#fr-ffd', '10'); await page.waitForTimeout(320);
@@ -284,6 +288,9 @@ console.log('✓ ad boxes: ins never hidden; label and margin only with filled/u
   }
   // home: quick sun check and its link into the simulator
   {
+    const hp = await open('/#city=x&deg=90');
+    if (await hp.evaluate(() => location.hash)) fail('home: #values stay in the address bar');
+    await hp.close();
     const page = await open('/');
     const a = (await page.textContent('#quick-results .result-grid')).trim();
     await page.selectOption('#q-facing', '180'); await page.selectOption('#q-city', { label: 'Phoenix, AZ' });

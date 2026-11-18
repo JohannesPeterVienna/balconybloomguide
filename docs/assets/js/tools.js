@@ -320,6 +320,7 @@
     CITIES.forEach(function (c, i) { var o = document.createElement('option'); o.value = i; o.textContent = c[0]; city.appendChild(o); });
     FACINGS.forEach(function (x) { var o = document.createElement('option'); o.value = x[0]; o.textContent = x[1]; facing.appendChild(o); });
     facing.value = '90';
+    takeHash();   // the home page takes no values from a link; anything of that shape is removed from the address bar
     var mNow = new Date().getMonth();
     function run() {
       var c = CITIES[+city.value] || CITIES[0], above = f.elements.above.checked;
@@ -467,15 +468,14 @@
       if (!a.m2) return h + '<p class="small">Enter the length and depth of the balcony floor above to see the average load of the pots per ' + (unit === 'in' ? 'square foot' : 'square metre') + '.</p>';
       var r = P.areaLoad(tot, a.m2, a.ref);
       h += '<div class="result-grid"><div class="stat"><div class="l">Pots averaged over ' + (unit === 'in' ? fmt(a.m2 / (FT * FT), 0) + ' sq ft' : fmt(a.m2, 1) + ' m²') + '</div><div class="v">' + showP(r.avgKgM2) + '</div></div>';
-      if (r.state !== 'none') h += '<div class="stat"><div class="l">Share of the ' + esc(a.refText) + ' figure used by pots alone</div><div class="v">' + fmt(r.share * 100, 0) + ' %</div></div>';
+      if (r.state !== 'none') h += '<div class="stat"><div class="l">Pots alone, as a share of the ' + esc(a.refText) + ' figure</div><div class="v">' + fmt(r.share * 100, 0) + ' %</div></div>';
       h += '</div>';
       var msg = {
         none: 'Choose or enter the live-load figure that applies to your building to compare. Without one, this number is only a description of your pots.',
-        low: 'The pots alone use less than half of the figure. The same figure also has to cover every person on the balcony, the furniture, water in saucers and snow – it is not spare capacity for plants.',
-        high: 'The pots alone use more than half of the figure, before a single person steps onto the balcony. Ask the building manager or a structural engineer before you set this up.',
-        over: 'The pots alone are heavier than the whole figure allows for everything on the balcony. Do not set this up without a structural engineer\'s written approval.'
+        share: 'This percentage is not a rating, and a small one is not an all-clear. Planters are a permanent load that stays in place day and night; a live-load figure is the allowance for people, furniture and other movable things and is not spare capacity for plants. It also has to cover water in saucers and snow.',
+        over: 'The pots alone reach or exceed the whole figure meant for everything on the balcony. Do not set this up without a structural engineer\'s written approval.'
       }[r.state];
-      h += '<aside class="caution loadmsg" data-state="' + r.state + '"><p><b>' + { none: 'No comparison yet.', low: 'Below half.', high: 'More than half.', over: 'Over the figure.' }[r.state] + '</b> ' + msg + '</p><p>This is arithmetic, not a clearance: a design figure only helps if your balcony was built to it and is still sound, and nobody can see that from a pot list. The owner, the building manager or a structural engineer decides. The 50 % line is this site\'s own caution mark, not a rule from a code.</p></aside>';
+      h += '<aside class="caution loadmsg" data-state="' + r.state + '"><p><b>' + { none: 'No comparison yet.', share: 'A proportion, not a verdict.', over: 'Over the figure.' }[r.state] + '</b> ' + msg + '</p><p>This is arithmetic, not a clearance: a design figure only helps if it is the one your balcony was built to and the structure is still sound, and nobody can see that from a pot list. The example figures come from one state\'s residential code and need not apply to your building. The owner, the building manager or a structural engineer decides.</p></aside>';
       return h;
     }
     function state() {
@@ -721,8 +721,11 @@
       vis();
       var e = f.elements, s = place.value === 'custom' ? null : station(place.value), lf, ff, basis, mixKey = e.mix.value, wet = mixKey === 'lightweight' ? 0.6 : 0.75;
       if (s) {
-        if (!s[6]) {
-          out.innerHTML = '<p><b>' + esc(s[0]) + ':</b> NOAA gives no freeze dates for this station (' + esc(s[2]) + '): a temperature of 32 °F or lower occurred in ' + fmt(s[11], 0) + ' % of the years 1991–2020. Frost does not set the planting calendar here; heat and day length do, and a frost-based schedule would mislead. Use the planting calendar of your state\'s extension service. The container sizes in the <a href="/plants/reference/">plant reference</a> apply everywhere.</p>';
+        if (!s[6] || !P.freezeRegular(s[11])) {
+          out.innerHTML = '<p><b>' + esc(s[0]) + ':</b> ' + (s[6]
+            ? 'at this station (' + esc(s[2]) + ') a temperature of 32 °F or lower occurred in only ' + fmt(s[11], 1) + ' % of the years 1991–2020. In the years with a freeze, NOAA\'s median dates are ' + P.label(P.doy(s[9])) + ' for the first and ' + P.label(P.doy(s[6])) + ' for the last one – both in mid-winter, with no frost-free "season" between a spring and a fall date.'
+            : 'NOAA gives no freeze dates for this station (' + esc(s[2]) + '): a temperature of 32 °F or lower occurred in ' + fmt(s[11], 0) + ' % of the years 1991–2020.') +
+            ' Frost does not set the planting calendar here; heat and day length do, and a schedule counted from frost dates would mislead, so this planner gives none. Use the planting calendar of your state\'s extension service' + (s[6] ? ' and protect tender pots on the rare cold night' : '') + '. The container sizes in the <a href="/plants/reference/">plant reference</a> apply everywhere.</p>';
           return;
         }
         var cautious = e.risk.value === 'cautious';
@@ -748,14 +751,17 @@
         if (!r) return;
         var cont = c[6].map(function (k) { var cc = D.CONTAINERS[k], w = P.containerWeight(cc.gal, wet); return cc.gal[0] + '–' + cc.gal[1] + ' gal (' + fmt(w.litres[0], 0) + '–' + fmt(w.litres[1], 0) + ' L), ' + cc.depth[0] + '–' + cc.depth[1] + ' in deep'; }).join(' or ') || (c[7] || 'not given');
         var wt = c[6].map(function (k) { var w = P.containerWeight(D.CONTAINERS[k].gal, wet); return fmt(w.lb[0], 0) + '–' + fmt(w.lb[1], 0) + ' lb (' + fmt(w.kg[0], 0) + '–' + fmt(w.kg[1], 0) + ' kg)'; }).join(' or ') || '–';
-        var fit = r.fit == null ? (ff == null ? '–' : r.seasonDays + ' days to the fall freeze') : { fits: 'Fits: ' + r.seasonDays + ' days to the fall freeze', tight: 'Tight: ' + r.seasonDays + ' days, less than 4 weeks to spare', short: 'Too short: only ' + r.seasonDays + ' days' }[r.fit];
+        var warm = c[2] === 'very';   // CSU: very tender crops also need settled warm weather, not just a frost-free date
+        var fit = r.fit == null ? (ff == null ? '–' : r.seasonDays + ' days to the fall freeze') : { fits: (warm ? 'Long enough by the calendar: ' : 'Fits: ') + r.seasonDays + ' days to the fall freeze', tight: 'Tight: ' + r.seasonDays + ' days, less than 4 weeks to spare', short: 'Too short: only ' + r.seasonDays + ' days' }[r.fit];
+        if (warm && r.fit && r.fit !== 'short') fit += ' – only if days are warm; a cool summer can still fail this crop';
+        var outNote = warm ? 'not before daytime temperatures stay above 55 °F (13 °C)' : '';
         var dth = c[3] == null ? '–' : c[3] + (c[4] ? ' from transplanting' : ' from sowing');
-        rows += '<tr><td><b>' + esc(c[1]) + '</b></td><td>' + D.CLASSES[c[2]].name + '</td><td>' + (r.sowText || '–') + '</td><td>' + r.outText + '</td><td>' + dth + '</td><td>' + (r.harvestText || '–') + '</td><td>' + fit + '</td><td>' + esc(cont) + '</td><td>' + wt + '</td></tr>';
-        csvRows.push([c[1], D.CLASSES[c[2]].name, r.sowText || '', r.outText, dth, r.harvestText || '', fit, cont, wt]);
-        text.push(c[1] + ': ' + (r.sowText ? 'sow indoors ' + r.sowText + ', ' : '') + 'outdoors from ' + r.outText);
+        rows += '<tr><td><b>' + esc(c[1]) + '</b></td><td>' + D.CLASSES[c[2]].name + '</td><td>' + (r.sowText || '–') + '</td><td>' + r.outText + (outNote ? '<br><span class="small">' + outNote + ' (CSU)</span>' : '') + '</td><td>' + dth + '</td><td>' + (r.harvestText || '–') + '</td><td>' + fit + '</td><td>' + esc(cont) + '</td><td>' + wt + '</td></tr>';
+        csvRows.push([c[1], D.CLASSES[c[2]].name, r.sowText || '', r.outText + (outNote ? '; ' + outNote : ''), dth, r.harvestText || '', fit, cont, wt]);
+        text.push(c[1] + ': ' + (r.sowText ? 'sow indoors ' + r.sowText + ', ' : '') + 'outdoors from ' + r.outText + (outNote ? ' (' + outNote + ')' : ''));
       });
       html += '<div class="tablewrap"><table class="data wide"><caption>Earliest dates by the frost rule for ' + esc(s ? s[0] : 'your dates') + '</caption><thead><tr><th>Crop</th><th>Frost class</th><th>Sow indoors</th><th>Plant or sow outdoors from</th><th>Days to harvest</th><th>First harvest about</th><th>Season check</th><th>Smallest container</th><th>Wet mix in it</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
-      html += '<p class="small">Frost classes, planting-out rule, transplant age and days to harvest: Colorado State University Extension, GardenNotes #720. Container sizes: University of Maryland Extension. The dates and weights are this site\'s arithmetic on those figures. They are the earliest dates by frost alone – CSU also ties planting to soil temperature and, for very tender crops, to settled warm weather. "First harvest" counts the typical days to harvest from the end of the planting-out window; cool nights and a shaded balcony slow that down.</p>';
+      html += '<p class="small">Frost classes, planting-out rule, transplant age and days to harvest: Colorado State University Extension, GardenNotes #720. Container sizes: University of Maryland Extension. The dates and weights are this site\'s arithmetic on those figures. They are the earliest dates by frost alone – CSU also ties planting to soil temperature and, for very tender crops, to summer-like weather with days consistently above 55 °F; it notes that a week of daytime temperatures below 55 °F may stunt them. "First harvest" counts the typical days to harvest from the end of the planting-out window; cool nights and a shaded balcony slow that down.</p>';
       html += '<div class="row noprint"><button type="button" class="btn sun" id="frost-print">Print plan</button><button type="button" class="btn ghost" id="frost-csv">Download CSV</button></div>' + shareBar();
       out.innerHTML = html;
       $('#frost-print', out).addEventListener('click', function () { window.print(); });
@@ -782,7 +788,7 @@
     if (st.season != null) f.elements.season.value = P.oneOf(st.season, ['', 'cool', 'warm', 'none'], '');
     if (st.size != null) f.elements.size.value = P.oneOf(st.size, ['', 'L', 'M', 'S'], '');
     if (st.q != null) f.elements.q.value = P.cleanText(st.q, 40);
-    var WINTER = { out: 'Can stay outside: rated two zones colder than your balcony', protect: 'Hardy in the ground in your zone, but without the two-zone margin: shelter and wrap the pot', 'in': 'Not hardy in your zone: overwinter frost-free or grow as an annual' };
+    var WINTER = { out: 'Can stay outside in its pot', protect: 'Outside only with shelter: against the wall, pot wrapped, see the profile', 'in': 'Too cold for the pot outside: overwinter frost-free or grow as an annual' };
     function run() {
       var e = f.elements, q = e.q.value.trim().toLowerCase(), h = num(e.hours), n = 0, zone = parseInt(e.zone.value, 10);
       crops.forEach(function (tr) {
@@ -795,7 +801,7 @@
       });
       count.textContent = 'Showing ' + n + ' of ' + crops.length + ' rows' + (isFinite(h) && e.hours.value !== '' ? ' whose light figure starts at ' + fmt(h, 1) + ' h or less; rows without a light figure are hidden' : '') + '.';
       per.forEach(function (tr) {
-        var cell = $('[data-winter]', tr), r = P.potWinter(zone, parseInt(tr.getAttribute('data-minzone'), 10));
+        var cell = $('[data-winter]', tr), r = P.potWinter(zone, D.PERENNIALS[parseInt(tr.getAttribute('data-i'), 10)]);
         cell.textContent = r ? WINTER[r] : 'Choose your zone above';
         tr.setAttribute('data-state', r || '');
       });

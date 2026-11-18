@@ -218,8 +218,7 @@ details.steps { margin: 1em 0; border: 1px solid var(--rule); border-radius: 12p
 details.steps summary { cursor: pointer; font-weight: 700; min-height: 32px; }
 details.steps ul { margin: .6em 0; padding-left: 1.2em; font-size: .93rem; overflow-wrap: anywhere; }
 .tablewrap table.data.wide { min-width: 980px; }
-.loadmsg[data-state="high"], .loadmsg[data-state="over"] { border-left-color: var(--sun); border-left-width: 8px; }
-.loadmsg[data-state="over"] { outline: 2px solid var(--ink); }
+.loadmsg[data-state="over"] { border-left-color: var(--sun); border-left-width: 8px; outline: 2px solid var(--ink); }
 #ref-perennials tr[data-state="out"] [data-winter], #ref-perennials tr[data-state="protect"] [data-winter], #ref-perennials tr[data-state="in"] [data-winter] { font-weight: 700; }
 .trybox { background: var(--card); border: 1px solid var(--rule); border-left: 5px solid var(--sun); border-radius: 12px; padding: .8em 1em; margin: 1.2em 0; }
 .trybox p { margin: 0 0 .5em; } .trybox p:last-child { margin: 0; }
