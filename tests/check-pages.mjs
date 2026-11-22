@@ -57,10 +57,11 @@ if (fs.readFileSync(path.join(DOCS, 'ads.txt'), 'utf8') !== 'google.com, pub-781
 const PROFILE = /^\/plants\/(?!reference\/|lavender\/|rosemary\/)[a-z-]+\/$/;   // lavender and rosemary: zones now printed from data.js
 const UNCHANGED = /^\/(imprint|contact)\/$/;
 for (const m of fs.readFileSync(path.join(DOCS, 'sitemap.xml'), 'utf8').matchAll(/<loc>https:\/\/balconybloomguide\.com([^<]*)<\/loc><lastmod>([^<]*)<\/lastmod>/g)) {
-  const want = UNCHANGED.test(m[1]) ? '2026-10-31' : PROFILE.test(m[1]) ? '2026-11-04' : '2026-11-18';
+  const revised = m[1] === '/' || m[1] === '/tools/sun-hours/' || /^\/guides\/(north|east|south|west)-facing-balcony-plants\/$/.test(m[1]);
+  const want = revised ? '2026-11-22' : UNCHANGED.test(m[1]) ? '2026-10-31' : PROFILE.test(m[1]) ? '2026-11-04' : '2026-11-18';
   if (m[2] !== want) problems.push(`sitemap lastmod ${m[1]} ${m[2]} instead of ${want}`);
   const h = fs.readFileSync(path.join(DOCS, m[1], 'index.html'), 'utf8');
-  const shown = { '2026-11-18': 'November 18, 2026', '2026-11-04': 'November 4, 2026', '2026-10-31': 'October 31, 2026' }[want];
+  const shown = { '2026-11-22': 'November 22, 2026', '2026-11-18': 'November 18, 2026', '2026-11-04': 'November 4, 2026', '2026-10-31': 'October 31, 2026' }[want];
   const mod = (h.match(/"dateModified":"([^"]*)"/) || [])[1];
   if (mod && mod !== want) problems.push(`${m[1]}: dateModified ${mod} instead of ${want}`);
   const vis = (h.match(/<p class="reviewed">[^<]*?(\w+ \d+, 2026)/) || [])[1];

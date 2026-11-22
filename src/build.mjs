@@ -477,10 +477,10 @@ ${relatedCards(['tools/frost-dates', 'tools/sun-hours', 'tools/pot-weight'])}
 
 
 // home, about, legal
-const home = HOME({ GROUPS, GUIDEMETA, TOOLMETA, TOOLS, esc, QUICK: FORMS.quick });
+const home = HOME({ QUICK: FORMS.quick });
 home.html = home.html.replace('<section style="max-width:74ch"><h2 id="why">', `<h2 id="plants">Plant profiles</h2><div class="cards">${PLANTS.slice(0, 6).map(plantCard).join('')}</div>\n<p><a href="/plants/">All ten plant profiles →</a> · <a href="/plants/reference/">Crop and plant reference: 33 container crops →</a></p>\n<section style="max-width:74ch"><h2 id="why">`);
 if (!home.html.includes('id="plants"')) throw new Error('home: plant block not placed');
-pages.push({ ...home, path: '/', kind: 'home', ads: false, modified: EW_ISO, scripts: ['sun.js', 'plan.js', 'tools.js'], crumbs: [['Home', '/']],
+pages.push({ ...home, path: '/', kind: 'home', ads: false, modified: '2026-11-22', scripts: ['sun.js', 'plan.js', 'tools.js'], crumbs: [['Home', '/']],
   schema: [{ '@type': 'WebSite', name: NAME, url: SITE + '/', inLanguage: 'en' }] });
 for (const p of STATIC_PAGES) pages.push({ ...p, kind: 'static', ads: false });
 

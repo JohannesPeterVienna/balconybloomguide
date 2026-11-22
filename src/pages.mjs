@@ -2,8 +2,7 @@
 const RIS = 'https://www.ris.bka.gv.at/GeltendeFassung.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10007517';
 const legal = (kicker, h1, inner, updated = 'October 31, 2026') => `<article><span class="kicker">${kicker}</span><h1>${h1}</h1>${inner}<p class="reviewed">Last updated: ${updated}</p></article>`;
 
-export function HOME({ GROUPS, GUIDEMETA, TOOLMETA, TOOLS, esc, QUICK }) {
-  const card = (s) => `<a class="card" href="/guides/${s}/"><span class="k">${esc(GUIDEMETA[s].kicker)}</span><h3>${esc(GUIDEMETA[s].h1)}</h3><p>${esc(GUIDEMETA[s].description)}</p></a>`;
+export function HOME({ QUICK }) {
   const sketch = `<figure><svg viewBox="0 0 640 260" role="img" aria-labelledby="home-fig-t"><title id="home-fig-t">Cross-section of a balcony: the slab above shades the back wall while the railing still gets sun</title>
 <rect class="s-paper" x="0" y="0" width="640" height="260"/>
 <rect class="s-moss" x="40" y="30" width="26" height="210"/>
@@ -46,7 +45,14 @@ ${sketch}
 <li><b>Sources you can check</b><span>Extension services, NOAA, USDA and RHS named where their figures are used.</span></li>
 <li><b>Free, no sign-up</b><span>Everything runs in your browser; your balcony profile stays on your device.</span></li>
 </ul></section>
-${GROUPS.map((g) => `<h2 id="${g.key}">${g.name}</h2><div class="cards">${g.slugs.map(card).join('')}</div>`).join('\n')}
+<h2 id="sun">Where does the light actually land?</h2>
+<p>Mark the position of one pot with a piece of tape. Record the first and last direct sun there, including a break when a side wall casts a shadow. Use the <a href="/tools/sun-hours/#sun-log">sun observation log</a> to total the minutes. Repeat at the back wall before deciding which pot to move.</p>
+<h2 id="load">What will you have to move?</h2>
+<p>Use the <a href="/tools/pot-weight/">pot weight planner</a> for the container after watering. Count each container once and keep a separate note of any reservoir. If the plan depends on attaching a box to the railing, identify the railing shape and the fitting before buying the box; the <a href="/guides/railing-planters/">railing planter guide</a> shows the mounting questions.</p>
+<h2 id="grow">Which crop suits that particular spot?</h2>
+<p>A tomato and a pot of parsley can occupy very different parts of one balcony. Compare the measured light at each position with the <a href="/plants/reference/">crop reference</a>, then check whether the mature container will leave the door clear. The <a href="/guides/balcony-herb-garden-part-shade/">part-shade herb plan</a> gives a starting layout for three pots.</p>
+<h2 id="care">How many days must the water last?</h2>
+<p>Before leaving for a weekend, measure what you actually add to one pot on two comparable days. Enter the pot measurements, weather and days away in the <a href="/tools/watering-planner/">watering planner</a>. Compare its daily estimate with the volume you measured before deciding how much water to leave. Use the <a href="/guides/">guide library</a> for the full selection on winter storage, wind and seasonal care.</p>
 <section style="max-width:74ch"><h2 id="why">Why start from the balcony, not the plant</h2>
 <p>The slab of the balcony above, the side walls and the building across the street decide which spot gets six hours of sun and which gets two. Most gardening advice is written for open ground. A balcony is a box hanging on a wall: the floor above cuts off the high summer sun, the side walls cut off the early and late sun, and the wind at the eighth floor is not the wind at street level. Pots hold a few gallons of mix that dry out in a day, and every gallon of wet mix weighs about six pounds.</p>
 <p>So every guide on this site states which spot on the balcony it means, which numbers it relies on and where they come from. The tools work without an account; your balcony profile is stored only in your browser. Read <a href="/about/">how the calculations work and where their limits are</a>.</p></section>`
