@@ -6,6 +6,8 @@ import { createRequire } from 'node:module';
 import { FORMS } from './forms.mjs';
 import { STATIC_PAGES, HOME } from './pages.mjs';
 
+const shopLink = fs.readFileSync(new URL('./shop-link.html', import.meta.url), 'utf8');
+
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 // the same code the browser runs: computed tables on the pages cannot drift from the tools
 const require = createRequire(import.meta.url);
@@ -93,7 +95,7 @@ function footer() {
 <div><h2>Plant profiles</h2><ul>${PLANTS.slice(0, 5).map(([s, n]) => `<li><a href="/plants/${s}/">${esc(n)}</a></li>`).join('')}<li><a href="/plants/">All plant profiles</a></li><li><a href="/plants/reference/">Crop &amp; plant reference</a></li></ul></div>
 <div><h2>Popular guides</h2><ul>${['east-facing-balcony-plants', 'balcony-weight-limit-planters', 'balcony-tomatoes', 'watering-balcony-plants-summer'].map(g).join('')}</ul></div>
 <div><h2>Site</h2><ul><li><a href="/about/">About &amp; method</a></li><li><a href="/contact/">Contact</a></li><li><a href="/imprint/">Imprint</a></li><li><a href="/privacy/">Privacy policy</a></li><li><button type="button" class="linklike" data-privacy-settings>Privacy settings</button></li></ul></div>
-</div><p class="small" style="color:inherit;opacity:.8;margin-top:18px">© 2026 AdStern, Vienna · Fonts: Young Serif and Atkinson Hyperlegible (SIL Open Font License)</p></div></footer>`;
+</div><p class="small" style="color:inherit;opacity:.8;margin-top:18px">© 2026 AdStern, Vienna · Fonts: Young Serif and Atkinson Hyperlegible (SIL Open Font License)</p>${shopLink}</div></footer>`;
 }
 
 function ldjson(obj) { return `<script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`; }
