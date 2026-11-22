@@ -39,6 +39,10 @@ ${unitSeg('sun-units', 'ft', 'm', 'Units')}
 </div></fieldset>
 </form>
 <div id="sun-results" class="results" aria-live="polite"></div>
+<fieldset id="sun-log"><legend>Measure the sun at one pot</legend>
+<p>On a clear day, mark one pot position and note when direct sun first strikes its leaves and when it leaves them. Enter up to two observed intervals on that same day. If you missed part of the day, the result is a lower bound. Check another month separately.</p>
+${['First interval', 'Second interval (optional)'].map((label, i) => `<div class="fields"><div><label for="sun-start-${i}">${label} start</label><input id="sun-start-${i}" type="time"></div><div><label for="sun-end-${i}">${label} end</label><input id="sun-end-${i}" type="time"></div></div>`).join('')}
+<p id="sun-observed" role="status"></p></fieldset>
 <p class="small">Clear-sky geometry: clouds, trees and buildings you have not entered are not included. The building opposite is treated as a long wall parallel to yours.</p>
 </section>`,
 

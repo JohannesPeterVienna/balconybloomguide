@@ -129,7 +129,43 @@
     return 'is below the 3–5 h given for cool-season crops';
   }
 
+  function initSunLog(root) {
+    var log = $('#sun-log', root);
+    var output = $('#sun-observed', log);
+    function minutes(value) {
+      var parts = value.split(':');
+      return Number(parts[0]) * 60 + Number(parts[1]);
+    }
+    function updateLog() {
+      var intervals = [];
+      for (var i = 0; i < 2; i++) {
+        var start = $('#sun-start-' + i, log).value;
+        var end = $('#sun-end-' + i, log).value;
+        if (!start && !end) continue;
+        if (!start || !end || minutes(end) <= minutes(start)) {
+          output.textContent = 'Each interval needs a start and a later end on the same day.';
+          return;
+        }
+        intervals.push([minutes(start), minutes(end)]);
+      }
+      if (!intervals.length) {
+        output.textContent = 'Enter the times you observed at this pot.';
+        return;
+      }
+      intervals.sort(function (a, b) { return a[0] - b[0]; });
+      var total = 0, previousEnd = 0;
+      intervals.forEach(function (span) {
+        total += Math.max(0, span[1] - Math.max(previousEnd, span[0]));
+        previousEnd = Math.max(previousEnd, span[1]);
+      });
+      output.textContent = 'Observed direct sun: ' + Math.floor(total / 60) + ' h ' + (total % 60) +
+        ' min. Overlapping minutes count once. Compare this with the model for the same spot and month.';
+    }
+    log.addEventListener('input', updateLog);
+    updateLog();
+  }
   function initSun(root) {
+    initSunLog(root);
     var f = $('#sun-form', root), unitSeg = $('#sun-units', root);
     var city = $('#sun-city', f);
     CITIES.forEach(function (c, i) { var o = document.createElement('option'); o.value = i; o.textContent = c[0]; city.appendChild(o); });

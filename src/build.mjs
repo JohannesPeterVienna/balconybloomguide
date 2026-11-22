@@ -271,6 +271,7 @@ for (const g of GROUPS) for (const s of g.slugs) {
   const m = GUIDEMETA[s];
   if (!TRY[s]) throw new Error('guide without a preset tool link: ' + s);
   const [lede, rest] = firstParaSplit(enhance(COMPUTED[s] ? beforeNthH2(guideBodies[s], 3, COMPUTED[s]) : guideBodies[s]));
+  const observed = ["north", "east", "south", "west"].some(side => s === side + "-facing-balcony-plants");
   const faq = faqFrom(guideBodies[s]);
   const html = `<div class="layout with-side"><article>
 <span class="kicker">${esc(m.kicker)}</span>
@@ -281,11 +282,11 @@ ${TRY[s]}
 ${AD('top')}
 ${rest}
 ${relatedCards(m.related)}
-<p class="reviewed">Last updated: ${EW}. Found an error? <a href="/contact/">Tell us</a>.</p>
+<p class="reviewed">Last updated: ${observed ? 'November 22, 2026' : EW}. Found an error? <a href="/contact/">Tell us</a>.</p>
 </article><aside class="side" aria-label="Advertisement">${AD('side')}</aside></div>`;
-  pages.push({ path: `/guides/${s}/`, kind: 'guide', ads: true, modified: EW_ISO, title: m.title, description: m.description, html, navCurrent: '/guides/',
+  pages.push({ path: `/guides/${s}/`, kind: 'guide', ads: true, modified: observed ? '2026-11-22' : EW_ISO, title: m.title, description: m.description, html, navCurrent: '/guides/',
     crumbs: [['Home', '/'], ['Guides', '/guides/'], [m.h1, `/guides/${s}/`]],
-    schema: [{ '@type': 'Article', headline: m.h1, description: m.description, datePublished: PUBLISHED_ISO, dateModified: EW_ISO, inLanguage: 'en', mainEntityOfPage: `${SITE}/guides/${s}/`, publisher: { '@type': 'Organization', name: 'AdStern – Agentur für digitales Marketing', url: SITE + '/about/' } }, faq].filter(Boolean) });
+    schema: [{ '@type': 'Article', headline: m.h1, description: m.description, datePublished: PUBLISHED_ISO, dateModified: observed ? '2026-11-22' : EW_ISO, inLanguage: 'en', mainEntityOfPage: `${SITE}/guides/${s}/`, publisher: { '@type': 'Organization', name: 'AdStern – Agentur für digitales Marketing', url: SITE + '/about/' } }, faq].filter(Boolean) });
 }
 
 // plant profiles
@@ -337,9 +338,9 @@ for (const t of TOOLS) {
 ${FORMS[t]}
 <div class="prose">${afterFirstSection(rest, AD('top'))}
 ${relatedCards(m.related)}
-<p class="reviewed">Last updated: ${EW}. Your inputs are stored only in this browser.</p></div>
+<p class="reviewed">Last updated: ${t === 'sun-hours' ? 'November 22, 2026' : EW}. Your inputs are stored only in this browser.</p></div>
 </article>`;
-  pages.push({ path: `/tools/${t}/`, kind: 'tool', ads: true, modified: EW_ISO, title: m.title, description: m.description, html, scripts: TOOL_SCRIPTS[t],
+  pages.push({ path: `/tools/${t}/`, kind: 'tool', ads: true, modified: t === 'sun-hours' ? '2026-11-22' : EW_ISO, title: m.title, description: m.description, html, scripts: TOOL_SCRIPTS[t],
     crumbs: [['Home', '/'], ['Tools', '/tools/'], [TOOL_SHORT[t], `/tools/${t}/`]],
     schema: [{ '@type': 'WebApplication', name: m.h1, url: `${SITE}/tools/${t}/`, applicationCategory: 'UtilitiesApplication', operatingSystem: 'Any (web browser)', inLanguage: 'en', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } }, faq].filter(Boolean) });
 }
