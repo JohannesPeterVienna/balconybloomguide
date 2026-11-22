@@ -93,7 +93,7 @@ export const STATIC_PAGES = [
     crumbs: [['Home', '/'], ['Imprint', '/imprint/']],
     html: legal('Legal notice', 'Imprint', `<p>Information pursuant to § 5 Austrian E-Commerce Act (ECG) and § 25 Austrian Media Act (MedienG).</p>
 <h2 id="publisher">Publisher and media owner</h2>
-<p>AdStern – Agentur für digitales Marketing<br>Seilerstätte 8/8<br>1010 Wien<br>Österreich</p>
+<p>AdStern – Agentur für digitales Marketing<br>Seilerstätte 8<br>1010 Wien<br>Österreich</p>
 <p>Email: <a href="mailto:office@adstern.com">office@adstern.com</a></p>
 <h2 id="business">Business details</h2>
 <ul><li>Line of business: advertising agency (Werbeagentur)</li>
